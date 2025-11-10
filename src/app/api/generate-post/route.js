@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { handleGeneratePost } from "@/utils/handleGeneratePost";
-
+import dbConnect from '@/db';
 export async function POST(request) {
+    await dbConnect();
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -15,6 +16,12 @@ export async function POST(request) {
         if(!generatedPost){
             return NextResponse.json({ message: 'Post generation failed' }, { status: 500 });
         }
+        const currproject= new Project({
+            type:'generatePost',
+            clerkuserid:userId,
+            previewUrl:"generatedPost"
+        })
+        await currproject.save();
         return NextResponse.json({message:'Post generated successfully',generatedPost:generatedPost})
 
     } catch (error) {

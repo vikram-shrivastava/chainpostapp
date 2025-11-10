@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import {v2 as cloudinary } from 'cloudinary';
 import { handleUpload } from "@/utils/handleUpload";
-
+import dbConnect from '@/db';
 export const POST = async (request) => {
+    await dbConnect();
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -27,6 +28,12 @@ export const POST = async (request) => {
             height: height,
             crop: 'scale',
         });
+        const currproject= new Project({
+            type:'imageResize',
+            clerkuserid:userId,
+            previewUrl:"ImageResizedUrl"
+        })
+        await currproject.save();
         return NextResponse.json({message:'Image resized successfully',resizedUrl:resizedUrl})
     } catch (error) {
         return NextResponse.json({message:"The Image Cannot be resized",error:error})

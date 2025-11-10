@@ -75,15 +75,14 @@ export default function CompressVideoPage() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('originalsize', String(selectedFile.size));
+      formData.append('originalsize', selectedFile.size.toString());
       formData.append('captionneeded', 'false'); // No captions needed for compression
 
-      const response = await fetch('/api/upload-video', {
+      const response = await fetch('/api/compress-video', {
         method: 'POST',
         body: formData,
       });
 
-      clearInterval(progressInterval);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -91,15 +90,18 @@ export default function CompressVideoPage() {
       }
 
       const data = await response.json();
-      
+      console.log('Compression response data:', data);
       setProgress(100);
 
       // Get compressed video URL from Cloudinary
       // Cloudinary automatically compresses and optimizes the video
       const cloudinaryUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload/${data.publicId}.mp4`;
       
-      setCompressedVideoUrl(cloudinaryUrl);
-      setCompressedSize(parseInt(data.compressedsize));
+      console.log(data.compressedSize)
+      const mb = (data.compressedSize) / (1024 * 1024);
+      console.log(mb.toFixed(2) + " MB");
+      setCompressedVideoUrl(data.url);
+      setCompressedSize(data.compressedSize);
       setIsComplete(true);
       setIsProcessing(false);
 

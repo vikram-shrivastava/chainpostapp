@@ -33,9 +33,5 @@ const userSchema = new Schema({
   projects: [{ type: Schema.Types.ObjectId, ref: 'Project' }],
 }, { timestamps: true });
 
-userSchema.index({ clerkuserid: 1 });
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-export default User;
+const UserModel =  mongoose.models.User || mongoose.model('User', userSchema);
+export default UserModel;

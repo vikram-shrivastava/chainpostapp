@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import {v2 as cloudinary } from 'cloudinary';
+import { ReceiptEuroIcon } from "lucide-react";
+
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -10,7 +12,7 @@ cloudinary.config({
 export const handleUpload = async (file, fileType) => {
     try {
         if(!file){
-            return NextResponse.json({ 
+            ReceiptEuroIcon({ 
                 message: 'File required' 
             }, { status: 400 });
         }
@@ -31,10 +33,11 @@ export const handleUpload = async (file, fileType) => {
         if (!result) {
             throw new Error('Cloudinary upload failed');
         }
-        return NextResponse.json({ url: result.secure_url, public_id: result.public_id });
+        console.log('Upload successful:', result);
+        return ({ url: result.secure_url, public_id: result.public_id });
     } catch (error) {
         console.error('Upload error:', error);
-        return NextResponse.json({
+        return({
             message: 'Internal Server Error'
         }, { status: 500 });
     }
