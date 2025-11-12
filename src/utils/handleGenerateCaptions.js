@@ -13,8 +13,9 @@ export async function handleGenerateCaption(file) {
         if(!getCaptions){
             return NextResponse.json({ message: 'Failed to get captions' }, { status: 500 });
         }
-        const { captions } = await getCaptions.json();
-        return NextResponse.json({captions:captions, message:'Captions Generated Successfully'}, { status: 200 });
+        const { captions,srt } = await getCaptions.json();
+        console.log("captionoutput",captions)
+        return ({captions:captions,srt:srt, message:'Captions Generated Successfully', status: 200 });
     } catch (error) {
         return NextResponse.json({ message: 'Failed to generate captions' }, { status: 500 });
     }

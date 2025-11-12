@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef,useEffect } from 'react';
 import { Upload, Maximize2, Download, X, Check, Loader2, Image, Smartphone, Monitor, Instagram, Linkedin, Twitter, Youtube, Facebook } from 'lucide-react';
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+import { toast } from "sonner";
 
 export default function ImageResizePage() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -12,6 +15,14 @@ export default function ImageResizePage() {
   const [originalDimensions, setOriginalDimensions] = useState({ width: 0, height: 0 });
   const [resizedImages, setResizedImages] = useState({});
   const fileInputRef = useRef(null);
+  const [isPageLoading, setIsPageLoading] = useState(true); // Page loading state
+
+
+  useEffect(() => {
+    // Simulate page loading
+    const timer = setTimeout(() => setIsPageLoading(false), 500); 
+    return () => clearTimeout(timer);
+  }, []);
 
   const platformPresets = [
     {
@@ -190,38 +201,112 @@ export default function ImageResizePage() {
     });
   };
 
-  const handleResize = () => {
-    if (selectedPlatforms.length === 0) return;
-    
-    setIsProcessing(true);
-    
-    // Simulate resize process
-    setTimeout(() => {
-      const resized = {};
-      selectedPlatforms.forEach(platformId => {
-        const platform = platformPresets.find(p => p.id === platformId);
-        resized[platformId] = {
-          url: imagePreview, // In real app, this would be the resized image
-          width: platform.width,
-          height: platform.height,
-          name: platform.name
-        };
+const handleResize = async () => {
+  if (selectedPlatforms.length === 0 || !selectedFile) return;
+
+  setIsProcessing(true);
+
+  try {
+    const resized = {};
+
+    // Loop through each platform preset
+    for (const platformId of selectedPlatforms) {
+      const platform = platformPresets.find(p => p.id === platformId);
+      if (!platform) continue;
+
+      // Create form data for backend request
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('width', platform.width);
+      formData.append('height', platform.height);
+      formData.append('fileName', selectedFile.name);
+
+      // Send POST request to backend
+      const response = await fetch('/api/image-resize', {
+        method: 'POST',
+        body: formData,
       });
-      setResizedImages(resized);
-      setIsProcessing(false);
-      setIsComplete(true);
-    }, 2000);
-  };
 
-  const handleDownloadSingle = (platformId) => {
-    // In real app, download the actual resized image
-    alert(`Downloading ${resizedImages[platformId].name}...`);
-  };
+      const data = await response.json();
 
-  const handleDownloadAll = () => {
-    // In real app, download all as zip
-    alert(`Downloading ${selectedPlatforms.length} resized images as ZIP...`);
-  };
+      if (!response.ok) {
+        console.error('Resize failed:', data.message);
+        continue;
+      }
+
+      // Store resized image info
+      resized[platformId] = {
+        url: data.resizedUrl,
+        width: platform.width,
+        height: platform.height,
+        name: platform.name,
+      };
+    }
+
+    setResizedImages(resized);
+    setIsComplete(true);
+  } catch (error) {
+    console.error('Error resizing image:', error);
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
+
+const handleDownloadSingle = async (platformId) => {
+  try {
+    const image = resizedImages[platformId];
+    toast.loading("Downloading image...");
+
+    const response = await fetch(image.url);
+    if (!response.ok) throw new Error("Network response was not ok");
+
+    const blob = await response.blob();
+    const fileName = `${image.name.replace(/\s+/g, "_")}_${image.width}x${image.height}.jpg`;
+    saveAs(blob, fileName);
+
+    toast.dismiss();
+    toast.success(`✅ ${image.name} downloaded successfully`);
+  } catch (error) {
+    console.error("Download failed:", error);
+    toast.dismiss();
+    toast.error("❌ Failed to download image. Please try again.");
+  }
+};
+
+const handleDownloadAll = async () => {
+  if (!Object.keys(resizedImages).length) {
+    toast.error("No images to download.");
+    return;
+  }
+
+  try {
+    toast.loading("Preparing ZIP file...");
+
+    const zip = new JSZip();
+    const folder = zip.folder("Resized_Images");
+
+    for (const [platformId, image] of Object.entries(resizedImages)) {
+      const response = await fetch(image.url);
+      if (!response.ok) throw new Error("Failed to fetch image");
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const fileName = `${image.name.replace(/\s+/g, "_")}_${image.width}x${image.height}.jpg`;
+      folder.file(fileName, arrayBuffer);
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    saveAs(zipBlob, "Resized_Images.zip");
+
+    toast.dismiss();
+    toast.success("🎉 All images downloaded as ZIP");
+  } catch (error) {
+    console.error("ZIP download failed:", error);
+    toast.dismiss();
+    toast.error("❌ Failed to download all images. Please try again.");
+  }
+};
+
 
   const handleReset = () => {
     setSelectedFile(null);
@@ -245,6 +330,15 @@ export default function ImageResizePage() {
     acc[platform.category].push(platform);
     return acc;
   }, {});
+
+
+    if (isPageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
+        <Loader2 className="w-12 h-12 text-teal-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-teal-50 via-white to-cyan-50 min-h-full">

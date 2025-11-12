@@ -10,35 +10,29 @@ cloudinary.config({
 });
 
 export const handleUpload = async (file, fileType) => {
-    try {
-        if(!file){
-            ReceiptEuroIcon({ 
-                message: 'File required' 
-            }, { status: 400 });
+  try {
+    if (!file) throw new Error('File required');
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: fileType,
+          folder: 'chainpost-uploads',
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
         }
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const result = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-            {
-                resource_type: fileType,
-                folder: 'chainpost-uploads',
-            },
-            (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-                },
-            ).end(buffer);
-        });
-        if (!result) {
-            throw new Error('Cloudinary upload failed');
-        }
-        console.log('Upload successful:', result);
-        return ({ url: result.secure_url, public_id: result.public_id });
-    } catch (error) {
-        console.error('Upload error:', error);
-        return({
-            message: 'Internal Server Error'
-        }, { status: 500 });
-    }
-}
+      ).end(buffer);
+    });
+
+    console.log('Upload successful:', result);
+    return { url: result.secure_url, public_id: result.public_id };
+  } catch (error) {
+    console.error('Upload error:', error);
+    return null;
+  }
+};

@@ -1,8 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
+
 import { NextResponse } from "next/server";
-const ai =new GoogleGenAI({
+import { auth } from "@clerk/nextjs/server";
+const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY,
 });
+const client = new OpenAI();
 export async function handleGeneratePost(file, platform) {
 
     const { userId } = await auth();
@@ -12,12 +16,18 @@ export async function handleGeneratePost(file, platform) {
     try {
         const form = new FormData();
         form.append("file", file, file.name);
-        const getCaptions=await fetch(`http://localhost:4000/transcribe`,{ method: "POST",body: form});
-        if(!getCaptions){
+        const getCaptions = await fetch(`http://localhost:4000/transcribe`, { method: "POST", body: form });
+        if (!getCaptions) {
             return NextResponse.json({ message: 'Failed to get captions' }, { status: 500 });
         }
         const { captions } = await getCaptions.json();
-        const prompt =`You are an AI assistant whose sole task is to generate a social post for a video based on two inputs: ${platform} and ${captions}.
+        const output_format = `{
+            "twitter": { "post_text_twitter": "corresponding_post_text1" },
+            "instagram": { "post_text_instagram": "corresponding_post_text2" },
+            "linkedin": { "post_text_linkedin": "corresponding_post_text3" }
+        }`;
+
+        const prompt = `You are an AI assistant whose sole task is to generate a social post for a video based on two inputs: ${platform} and ${captions}.
             OUTPUT RULES (must be followed exactly)
 
             1. Output must be plain, simple text only. No markdown, no bold, no italics, no surrounding quotes, no labels, no commentary, and no explanation. Return only the final post text(s) and nothing else.
@@ -39,6 +49,8 @@ export async function handleGeneratePost(file, platform) {
             3. Decide the best tone, CTA, hashtags, and emojis for the requested platform(s).
 
             4. Compose the post(s) using the platform-specific rules below.
+
+            5. Return the output in this ${output_format} structure only
 
             PLATFORM RULES (strict)
             Twitter
@@ -71,16 +83,16 @@ export async function handleGeneratePost(file, platform) {
             • If platform = Instagram → output exactly one short caption line (max 6–7 words) and nothing else.
             • If platform = Twitter → output a single paragraph ~120 words with 2–3 hashtags and 1 emoji and nothing else.
 
-            Now: read the given ${captions}, perform the analysis steps above, then output only the required plain text post(s) following the rules exactly.`;
-        
-        const response = await ai.generateContent({ 
-            model: "gemini-2.5-flash",
-            prompt: {
-                text: prompt,
-            },
+            Now: read the given ${captions}, perform the analysis steps above, then output only in the required ${output_format} following the rules exactly.`;
+
+        const response = await client.responses.create({
+            model: "gpt-4o-mini",
+            input: prompt
         });
-        const generatedText = response?.candidates[0]?.content;
-        return NextResponse.json({generatedPost:generatedText, message:`Post Generated for the ${platform} successfully`})
+        const generatedText = response?.output_text;
+        console.log("Generated Post Text:", generatedText);
+        console.log("Generated Post Text twitter:", generatedText.Twitter);
+        return ({ generatedPost: generatedText, message: `Post Generated for the ${platform} successfully` })
     } catch (error) {
         console.error("Error generating post:", error);
         throw new Error("Failed to generate post");

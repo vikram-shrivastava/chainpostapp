@@ -1,7 +1,19 @@
 "use client";
 
-import { Video, Type, FileText, Maximize2 } from "lucide-react";
+import {
+  Video,
+  Type,
+  FileText,
+  Maximize2,
+  Calendar,
+  HardDrive,
+  Film,
+  File,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
+import { Toaster, toast } from "sonner";
 
 export default function DashboardPage() {
   const tools = [
@@ -32,10 +44,20 @@ export default function DashboardPage() {
   ];
 
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
+
+
+    useEffect(() => {
+    // Simulate page loading
+    const timer = setTimeout(() => setIsPageLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        setLoading(true);
         const response = await fetch("/api/get-projects");
         if (!response.ok) {
           throw new Error("Failed to fetch projects");
@@ -44,13 +66,27 @@ export default function DashboardPage() {
         setProjects(data);
       } catch (error) {
         console.error("Error fetching projects:", error);
+        toast.error("Failed to fetch projects. Please try again.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchProjects();
   }, []);
 
+    if (isPageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-full">
+    <div className="bg-gradient-to-br from-blue-100 via-gray-200 to-purple-200 min-h-full relative">
+      {/* Toaster */}
+      <Toaster />
+
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
@@ -97,117 +133,173 @@ export default function DashboardPage() {
             </button>
           </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-  {projects.map((project) => (
-    <div
-      key={project._id}
-      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200 hover:-translate-y-1"
-    >
-      {/* Thumbnail or Type Icon */}
-      <div className="relative aspect-video overflow-hidden">
-        {project.thumbnailUrl ? (
-          <>
-            <img
-              src={project.thumbnailUrl}
-              alt={project.projectTitle || "Project thumbnail"}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </>
-        ) : (
-          <div className={`flex items-center justify-center w-full h-full ${
-            project.type === "videoCompression" ? "bg-gradient-to-br from-orange-400 to-orange-600" :
-            project.type === "videoCaption" ? "bg-gradient-to-br from-pink-400 to-pink-600" :
-            project.type === "generatePost" ? "bg-gradient-to-br from-purple-400 to-purple-600" :
-            "bg-gradient-to-br from-teal-400 to-teal-600"
-          }`}>
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/20 rounded-full blur-xl" />
-              {project.type === "videoCompression" && (
-                <Video className="relative w-16 h-16 text-white drop-shadow-lg" />
-              )}
-              {project.type === "videoCaption" && (
-                <Type className="relative w-16 h-16 text-white drop-shadow-lg" />
-              )}
-              {project.type === "generatePost" && (
-                <FileText className="relative w-16 h-16 text-white drop-shadow-lg" />
-              )}
-              {project.type === "imageResize" && (
-                <Maximize2 className="relative w-16 h-16 text-white drop-shadow-lg" />
-              )}
+          {/* Loader */}
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
             </div>
-          </div>
-        )}
-        
-        {/* Type Badge */}
-        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm bg-opacity-90 flex items-center gap-1.5 shadow-sm ${
-          project.type === "videoCompression" ? "bg-orange-50 text-orange-600" :
-          project.type === "videoCaption" ? "bg-pink-50 text-pink-600" :
-          project.type === "generatePost" ? "bg-purple-50 text-purple-600" :
-          "bg-teal-50 text-teal-600"
-        }`}>
-          {project.type === "videoCompression" && <Video className="w-3 h-3" />}
-          {project.type === "videoCaption" && <Type className="w-3 h-3" />}
-          {project.type === "generatePost" && <FileText className="w-3 h-3" />}
-          {project.type === "imageResize" && <Maximize2 className="w-3 h-3" />}
-          <span>
-            {project.type === "videoCompression" ? "Video Compression" :
-             project.type === "videoCaption" ? "Video Caption" :
-             project.type === "generatePost" ? "Generate Post" :
-             "Image Resize"}
-          </span>
-        </div>
-      </div>
+          ) : projects.length === 0 ? (
+            <p className="text-gray-500 text-center">No projects yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {projects.map((project) => (
+                <Link
+                  key={project._id}
+                  href={`dashboard/project/${project._id}`}
+                  className="group relative bg-white/70 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden hover:-translate-y-1 block"
+                >
+                  {/* Thumbnail or Type Icon */}
+                  <div className="relative aspect-video overflow-hidden">
+                    {project.thumbnailUrl ? (
+                      <>
+                        <img
+                          src={project.thumbnailUrl}
+                          alt={project.projectTitle || "Project thumbnail"}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </>
+                    ) : (
+                      <div
+                        className={`flex items-center justify-center w-full h-full ${
+                          project.type === "videoCompression"
+                            ? "bg-gradient-to-br from-orange-400 to-orange-600"
+                            : project.type === "videoCaption"
+                            ? "bg-gradient-to-br from-pink-400 to-pink-600"
+                            : project.type === "generatePost"
+                            ? "bg-gradient-to-br from-purple-500 to-indigo-600"
+                            : "bg-gradient-to-br from-teal-400 to-emerald-600"
+                        }`}
+                      >
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-white/20 rounded-full blur-xl" />
+                          {project.type === "videoCompression" && (
+                            <Video className="relative w-14 h-14 text-white drop-shadow-lg" />
+                          )}
+                          {project.type === "videoCaption" && (
+                            <Type className="relative w-14 h-14 text-white drop-shadow-lg" />
+                          )}
+                          {project.type === "generatePost" && (
+                            <FileText className="relative w-14 h-14 text-white drop-shadow-lg" />
+                          )}
+                          {project.type === "imageResize" && (
+                            <Maximize2 className="relative w-14 h-14 text-white drop-shadow-lg" />
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-      {/* Project Info */}
-      <div className="p-4">
-        <h3 className="text-base font-bold text-gray-800 truncate mb-3 group-hover:text-gray-900">
-          {project.projectTitle || "Untitled Project"}
-        </h3>
+                    {/* Type Badge */}
+                    <div
+                      className={`absolute bottom-1 left-1 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm bg-opacity-90 flex items-center gap-1.5 shadow-sm ${
+                        project.type === "videoCompression"
+                          ? "bg-orange-100 text-orange-700"
+                          : project.type === "videoCaption"
+                          ? "bg-pink-100 text-pink-700"
+                          : project.type === "generatePost"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-teal-100 text-teal-700"
+                      }`}
+                    >
+                      {project.type === "videoCompression" && (
+                        <Video className="w-3.5 h-3.5" />
+                      )}
+                      {project.type === "videoCaption" && (
+                        <Type className="w-3.5 h-3.5" />
+                      )}
+                      {project.type === "generatePost" && (
+                        <FileText className="w-3.5 h-3.5" />
+                      )}
+                      {project.type === "imageResize" && (
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {project.type === "videoCompression"
+                          ? "Video Compression"
+                          : project.type === "videoCaption"
+                          ? "Video Caption"
+                          : project.type === "generatePost"
+                          ? "Generate Post"
+                          : "Image Resize"}
+                      </span>
+                    </div>
+                  </div>
 
-        {/* File metadata */}
-        <div className="space-y-2 mb-3">
-          {project.fileName && (
-            <p className="text-xs text-gray-600 truncate">📄 {project.fileName}</p>
-          )}
-          {project.format && (
-            <p className="text-xs text-gray-600">🎞️ Format: {project.format}</p>
-          )}
-          {project.fileSizeMB && (
-            <p className="text-xs">
-              <span className="text-gray-600">💾 Size: </span>
-              <span className="font-medium text-gray-700">{project.fileSizeMB.toFixed(2)} MB</span>
-              {project.compressedSizeMB && (
-                <>
-                  <span className="text-gray-400 mx-1">→</span>
-                  <span className="font-medium text-green-600">{project.compressedSizeMB.toFixed(2)} MB</span>
-                </>
-              )}
-            </p>
-          )}
-          {project.duration && (
-            <p className="text-xs text-gray-600">⏱ Duration: {project.duration.toFixed(1)}s</p>
-          )}
-        </div>
+                  {/* Project Info */}
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 tracking-tight mb-3 group-hover:text-gray-900">
+                      {project.projectTitle || "Untitled Project"}
+                    </h3>
 
-        {/* Time info */}
-        <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-          <span className="text-xs text-gray-400">📅</span>
-          <p className="text-xs text-gray-500 font-medium">
-            {new Date(project.createdAt).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
-          </p>
-        </div>
-      </div>
+                    {/* File metadata */}
+                    <div className="space-y-2 mb-3 text-sm text-gray-600">
+                      {project.fileName && (
+                        <p className="flex items-center gap-1.5 truncate">
+                          <File className="w-4 h-4 text-gray-400" />
+                          {project.fileName}
+                        </p>
+                      )}
+                      {project.format && (
+                        <p className="flex items-center gap-1.5">
+                          <Film className="w-4 h-4 text-gray-400" />
+                          Format:{" "}
+                          <span className="font-medium text-gray-700 ml-1">
+                            {project.format}
+                          </span>
+                        </p>
+                      )}
+                      {project.fileSizeMB && (
+                        <p className="flex items-center gap-1.5">
+                          <HardDrive className="w-4 h-4 text-gray-400" />
+                          Size:{" "}
+                          <span className="font-medium text-gray-700 ml-1">
+                            {project.fileSizeMB.toFixed(2)} MB
+                          </span>
+                          {project.compressedSizeMB && (
+                            <>
+                              <span className="text-gray-400 mx-1">→</span>
+                              <span className="font-medium text-green-600">
+                                {project.compressedSizeMB.toFixed(2)} MB
+                              </span>
+                            </>
+                          )}
+                        </p>
+                      )}
+                      {project.duration && (
+                        <p className="flex items-center gap-1.5">
+                          <Video className="w-4 h-4 text-gray-400" />
+                          Duration:{" "}
+                          <span className="font-medium text-gray-700 ml-1">
+                            {`${Math.floor(
+                              project.duration / 60
+                            )}m ${Math.round(project.duration % 60)}s`}
+                          </span>
+                        </p>
+                      )}
+                    </div>
 
-      {/* Hover overlay effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-transparent to-transparent group-hover:from-blue-500/5 transition-all duration-300 pointer-events-none" />
-    </div>
-  ))}
-</div>
+                    {/* Time info */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <p className="text-xs text-gray-500 font-medium">
+                        {new Date(project.createdAt).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Subtle hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-500/0 via-blue-500/0 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Empty State for New Users */}

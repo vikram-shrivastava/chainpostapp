@@ -18,12 +18,14 @@ import {
   CreditCard,
   Zap,
   User,
+  Loader2,
 } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
+  const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
   const [activeTab, setActiveTab] = useState("preferences");
   const [theme, setTheme] = useState("light");
   const [language, setLanguage] = useState("en");
@@ -35,6 +37,13 @@ export default function SettingsPage() {
   const [autoSave, setAutoSave] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+
+
+  useEffect(() => {
+    // Simulate page loading
+    const timer = setTimeout(() => setIsPageLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const { signOut } = useClerk();
   const user = useUser();
@@ -121,6 +130,14 @@ export default function SettingsPage() {
   const handleManageAccount = () => {
     router.push("/account");
   };
+
+  if (isPageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
+        <Loader2 className="w-12 h-12 text-black animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-white to-slate-50 min-h-full">

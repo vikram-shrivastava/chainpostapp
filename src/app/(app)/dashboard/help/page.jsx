@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { HelpCircle, Search, Book, MessageCircle, Mail, Video, ChevronDown, ChevronUp, ExternalLink, FileText, Zap, Clock, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {Loader2, HelpCircle, Search, Book, MessageCircle, Mail, Video, ChevronDown, ChevronUp, ExternalLink, FileText, Zap, Clock, CheckCircle } from 'lucide-react';
 
 export default function HelpPage() {
+
+  const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -13,6 +15,12 @@ export default function HelpPage() {
     subject: '',
     message: ''
   });
+
+    useEffect(() => {
+    // Simulate page loading
+    const timer = setTimeout(() => setIsPageLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const categories = [
     { id: 'all', name: 'All Topics', icon: Book },
@@ -124,6 +132,15 @@ export default function HelpPage() {
     alert('Support ticket submitted! We\'ll respond within 24 hours.');
     setFormData({ name: '', email: '', subject: '', message: '' });
   };
+
+
+    if (isPageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-full">

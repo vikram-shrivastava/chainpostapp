@@ -45,11 +45,16 @@ export async function POST(request) {
 
         const thumbnailUrl = cloudinary.url(result.public_id, {
             resource_type: "video",
-            format: "jpg",        // convert frame to image
+            format: "jpg",
             transformation: [
-                { width: 400, height: 250, crop: "fill" },
-                { start_offset: 2 } // frame at 2 seconds
-            ]
+                {
+                    width: 400,
+                    height: 250,
+                    crop: "pad",          // add padding instead of cropping
+                    background: "auto",   // fill padding with blurred or matching background
+                },
+                { start_offset: 2 },    // capture frame at 2 seconds
+            ],
         });
 
         console.log('Generated thumbnail URL:', thumbnailUrl);

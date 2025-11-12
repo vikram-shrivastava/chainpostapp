@@ -1,9 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Upload, Video, Download, X, Check, Loader2, FileVideo, Info, AlertCircle } from 'lucide-react';
+import { useState, useRef,useEffect } from "react";
+import {
+  Upload,
+  Video,
+  Download,
+  X,
+  Check,
+  Loader2,
+  FileVideo,
+  Info,
+  AlertCircle,
+} from "lucide-react";
+import { Toaster, toast } from "sonner";
 
 export default function CompressVideoPage() {
+  const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
   const [selectedFile, setSelectedFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -14,10 +26,16 @@ export default function CompressVideoPage() {
   const [compressedVideoUrl, setCompressedVideoUrl] = useState(null);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
-
+  
+  useEffect(() => {
+    // Simulate page loading
+    const timer = setTimeout(() => setIsPageLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+  
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file && file.type.startsWith("video/")) {
       setSelectedFile(file);
       setOriginalSize(file.size);
       const url = URL.createObjectURL(file);
@@ -31,7 +49,7 @@ export default function CompressVideoPage() {
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file && file.type.startsWith("video/")) {
       setSelectedFile(file);
       setOriginalSize(file.size);
       const url = URL.createObjectURL(file);
@@ -42,16 +60,14 @@ export default function CompressVideoPage() {
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e) => e.preventDefault();
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   const handleCompress = async () => {
@@ -61,7 +77,6 @@ export default function CompressVideoPage() {
     setProgress(0);
     setError(null);
 
-    // Simulate progress for UI feedback
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 90) {
@@ -74,42 +89,35 @@ export default function CompressVideoPage() {
 
     try {
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('originalsize', selectedFile.size.toString());
-      formData.append('captionneeded', 'false'); // No captions needed for compression
+      formData.append("file", selectedFile);
+      formData.append("originalsize", selectedFile.size.toString());
+      formData.append("captionneeded", "false");
 
-      const response = await fetch('/api/compress-video', {
-        method: 'POST',
+      const response = await fetch("/api/compress-video", {
+        method: "POST",
         body: formData,
       });
 
-
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to compress video');
+        throw new Error(errorData.message || "Failed to compress video");
       }
 
       const data = await response.json();
-      console.log('Compression response data:', data);
       setProgress(100);
 
-      // Get compressed video URL from Cloudinary
-      // Cloudinary automatically compresses and optimizes the video
-      const cloudinaryUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload/${data.publicId}.mp4`;
-      
-      console.log(data.compressedSize)
-      const mb = (data.compressedSize) / (1024 * 1024);
-      console.log(mb.toFixed(2) + " MB");
+      const mb = data.compressedSize / (1024 * 1024);
       setCompressedVideoUrl(data.url);
       setCompressedSize(data.compressedSize);
       setIsComplete(true);
-      setIsProcessing(false);
-
+      toast.success("Video compressed successfully!");
     } catch (err) {
-      console.error('Compression error:', err);
-      setError(err.message || 'Failed to compress video. Please try again.');
-      setIsProcessing(false);
+      console.error("Compression error:", err);
+      setError(err.message || "Failed to compress video. Please try again.");
+      toast.error(err.message || "Compression failed!");
       setProgress(0);
+    } finally {
+      setIsProcessing(false);
       clearInterval(progressInterval);
     }
   };
@@ -118,22 +126,24 @@ export default function CompressVideoPage() {
     if (!compressedVideoUrl) return;
 
     try {
-      // Fetch the compressed video
       const response = await fetch(compressedVideoUrl);
       const blob = await response.blob();
-      
-      // Create download link
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${selectedFile?.name.replace(/\.[^/.]+$/, '')}-compressed.mp4`;
+      a.download = `${selectedFile?.name.replace(
+        /\.[^/.]+$/,
+        ""
+      )}-compressed.mp4`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      toast.success("Download started!");
     } catch (err) {
-      console.error('Download error:', err);
-      setError('Failed to download video. Please try again.');
+      console.error("Download error:", err);
+      setError("Failed to download video. Please try again.");
+      toast.error("Failed to download video!");
     }
   };
 
@@ -150,13 +160,21 @@ export default function CompressVideoPage() {
       URL.revokeObjectURL(videoPreview);
       setVideoPreview(null);
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    toast.success("Reset done! You can upload a new video now.");
+  }
+
+  if (isPageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
+        <Loader2 className="w-12 h-12 text-orange-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-orange-50 via-white to-amber-50 min-h-screen">
+      <Toaster />
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
@@ -165,12 +183,16 @@ export default function CompressVideoPage() {
               <Video className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-semibold text-gray-800">Compress Video</h1>
-              <p className="text-gray-600 mt-1">Reduce video file size without losing quality</p>
+              <h1 className="text-3xl font-semibold text-gray-800">
+                Compress Video
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Reduce video file size without losing quality
+              </p>
             </div>
           </div>
         </div>
-        
+
         {/* Upload Area */}
         {!selectedFile && (
           <div
@@ -213,8 +235,12 @@ export default function CompressVideoPage() {
                       <FileVideo className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-800 mb-1">{selectedFile.name}</h3>
-                      <p className="text-sm text-gray-600">Original size: {formatFileSize(originalSize)}</p>
+                      <h3 className="font-semibold text-gray-800 mb-1">
+                        {selectedFile.name}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Original size: {formatFileSize(originalSize)}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -233,7 +259,7 @@ export default function CompressVideoPage() {
                       src={videoPreview}
                       controls
                       className="w-full rounded-lg bg-black"
-                      style={{ maxHeight: '400px' }}
+                      style={{ maxHeight: "400px" }}
                     />
                   </div>
                 )}
@@ -273,10 +299,12 @@ export default function CompressVideoPage() {
                       </div>
                     </div>
                     <div className="text-sm text-gray-600 text-center">
-                      {progress < 30 && 'Uploading video...'}
-                      {progress >= 30 && progress < 60 && 'Analyzing video...'}
-                      {progress >= 60 && progress < 90 && 'Compressing and optimizing...'}
-                      {progress >= 90 && 'Finalizing compression...'}
+                      {progress < 30 && "Uploading video..."}
+                      {progress >= 30 && progress < 60 && "Analyzing video..."}
+                      {progress >= 60 &&
+                        progress < 90 &&
+                        "Compressing and optimizing..."}
+                      {progress >= 90 && "Finalizing compression..."}
                     </div>
                   </div>
                 )}
@@ -301,12 +329,14 @@ export default function CompressVideoPage() {
                     {/* Compressed Video Preview */}
                     {compressedVideoUrl && (
                       <div className="mb-4">
-                        <h4 className="font-semibold text-gray-800 mb-3">Compressed Video Preview</h4>
+                        <h4 className="font-semibold text-gray-800 mb-3">
+                          Compressed Video Preview
+                        </h4>
                         <video
                           src={compressedVideoUrl}
                           controls
                           className="w-full rounded-lg bg-black"
-                          style={{ maxHeight: '400px' }}
+                          style={{ maxHeight: "400px" }}
                         />
                       </div>
                     )}
@@ -314,13 +344,17 @@ export default function CompressVideoPage() {
                     {/* Size Comparison */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Original Size</p>
+                        <p className="text-sm text-gray-600 mb-1">
+                          Original Size
+                        </p>
                         <p className="text-2xl font-semibold text-gray-800">
                           {formatFileSize(originalSize)}
                         </p>
                       </div>
                       <div className="bg-green-50 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-1">Compressed Size</p>
+                        <p className="text-sm text-gray-600 mb-1">
+                          Compressed Size
+                        </p>
                         <p className="text-2xl font-semibold text-green-600">
                           {formatFileSize(compressedSize)}
                         </p>
@@ -331,8 +365,12 @@ export default function CompressVideoPage() {
                       <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                       <div className="text-sm text-blue-700">
                         <span className="font-semibold">
-                          Saved {Math.round((1 - compressedSize / originalSize) * 100)}%
-                        </span>{' '}
+                          Saved{" "}
+                          {Math.round(
+                            (1 - compressedSize / originalSize) * 100
+                          )}
+                          %
+                        </span>{" "}
                         of the original file size
                       </div>
                     </div>
@@ -364,23 +402,35 @@ export default function CompressVideoPage() {
 
             {/* Tips Card */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-800 mb-4">💡 Compression Tips</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">
+                💡 Compression Tips
+              </h3>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start">
                   <span className="text-orange-500 mr-2">•</span>
-                  <span>AI-powered compression maintains video quality while reducing file size</span>
+                  <span>
+                    AI-powered compression maintains video quality while
+                    reducing file size
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-orange-500 mr-2">•</span>
-                  <span>Best for sharing videos on social media or via email</span>
+                  <span>
+                    Best for sharing videos on social media or via email
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-orange-500 mr-2">•</span>
-                  <span>Original video is never modified, download creates a new file</span>
+                  <span>
+                    Original video is never modified, download creates a new
+                    file
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-orange-500 mr-2">•</span>
-                  <span>Optimized for MP4 format with automatic quality adjustment</span>
+                  <span>
+                    Optimized for MP4 format with automatic quality adjustment
+                  </span>
                 </li>
               </ul>
             </div>

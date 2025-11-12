@@ -6,7 +6,7 @@ import dbConnect from "@/db";
 export async function POST(req) {
   await dbConnect();
   try {
-    const { userId } = auth();
+    const { userId } =await auth();
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -22,7 +22,9 @@ export async function POST(req) {
       },
       { new: true, upsert: true }
     );
-
+    if(!user){
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
     return NextResponse.json({ message: "Settings updated", user });
   } catch (error) {
     console.error("Error updating settings:", error);
