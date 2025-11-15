@@ -1,168 +1,133 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Toaster, toast } from 'sonner';
-import { Upload, Type, Download, X, Check, Loader2, FileVideo, FileText, AlertCircle, Copy } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Upload,
+  FileVideo,
+  Video,
+  Loader2,
+  Check,
+  X,
+  Download,
+  AlertCircle,
+} from "lucide-react";
+
+import { Toaster, toast } from "sonner";
+import { CldUploadWidget } from "next-cloudinary";
 
 export default function GenerateCaptionsPage() {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  // Upload states
+  const [cloudinaryUrl, setCloudinaryUrl] = useState(null);
+  const [publicId, setPublicId] = useState(null);
+  const [originalSize, setOriginalSize] = useState(0);
+
+  // Processing states
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [videoPreview, setVideoPreview] = useState(null);
-  const [captionsPreview, setCaptionsPreview] = useState(''); // SRT content
-  const [plainTextCaptions, setPlainTextCaptions] = useState(''); // Plain text
+
+  // Result states
+  const [captionData, setCaptionData] = useState(null);
   const [error, setError] = useState(null);
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsPageLoading(false), 500);
+    const timer = setTimeout(() => setIsPageLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('video/')) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
+  // Cloudinary Upload Success
+  const handleUploadSuccess = (result) => {
+    if (result.event === "success") {
+      const info = result.info;
+
+      setCloudinaryUrl(info.secure_url);
+      setPublicId(info.public_id);
+      setOriginalSize(info.bytes);
+
       setIsComplete(false);
       setProgress(0);
       setError(null);
+      setCaptionData(null);
+
+      toast.success("Video uploaded successfully! Now generate captions.");
     }
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
-      setIsComplete(false);
-      setProgress(0);
-      setError(null);
-    }
-  };
-
-  const handleDragOver = (e) => e.preventDefault();
-
+  // Format file size
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  // Extract plain text from SRT
-  const extractPlainTextFromSRT = (srt) => {
-    return srt
-      .split('\n')
-      .filter((line) => !/^\d+$/.test(line)) // remove sequence numbers
-      .filter((line) => !/-->/g.test(line)) // remove timestamps
-      .filter((line) => line.trim() !== '') // remove empty lines
-      .join(' ');
-  };
-
-  const handleGenerate = async () => {
-    if (!selectedFile) return;
+  // Generate Captions
+  const handleGenerateCaptions = async () => {
+    if (!publicId) return toast.error("Upload a video first!");
 
     setIsProcessing(true);
     setProgress(0);
     setError(null);
 
-    // Simulate progress
-    const progressInterval = setInterval(() => {
+    const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 90) {
-          clearInterval(progressInterval);
+          clearInterval(interval);
           return 90;
         }
-        return prev + 10;
+        return prev + 8;
       });
-    }, 500);
+    }, 400);
 
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('originalsize', String(selectedFile.size));
-      formData.append('captionneeded', 'true');
-      formData.append('fileName', selectedFile.name);
-
-      const response = await fetch('/api/generate-captions', {
-        method: 'POST',
-        body: formData,
+      const response = await fetch("/api/generate-captions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          publicId,
+          cloudinaryUrl,
+          originalSize,
+        }),
       });
 
-      clearInterval(progressInterval);
-      console.log('Caption generation response:', response);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate captions');
+        const err = await response.json();
+        throw new Error(err.message);
       }
 
       const data = await response.json();
-      console.log('Caption generation response data:', data);
+
       setProgress(100);
+      setCaptionData(data);
+      setIsComplete(true);
 
-      if (data.Captions) {
-        const srtText=data.Captions
-        setCaptionsPreview(srtText);
-        setPlainTextCaptions(extractPlainTextFromSRT(srtText));
-        setIsComplete(true);
-        setIsProcessing(false);
-        toast.success('Captions generated successfully!');
-      } else if (data.transcriptionError) {
-        throw new Error(data.transcriptionError);
-      } else {
-        throw new Error('No captions were generated');
-      }
-
+      toast.success("Captions generated successfully!");
     } catch (err) {
-      console.error('Caption generation error:', err);
-      setError(err.message || 'Failed to generate captions. Please try again.');
-      setIsProcessing(false);
+      console.error(err);
+      setError(err.message);
+      toast.error(err.message);
       setProgress(0);
-      toast.error(err.message || 'Failed to generate captions.');
-      clearInterval(progressInterval);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDownloadSRT = () => {
-    const blob = new Blob([captionsPreview], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${selectedFile?.name.replace(/\.[^/.]+$/, '')}-captions.srt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('SRT file downloaded successfully!');
-  };
-
-  const handleCopyPlainText = () => {
-    navigator.clipboard.writeText(plainTextCaptions);
-    toast.success('Captions copied to clipboard!');
-  };
-
+  // Reset state
   const handleReset = () => {
-    setSelectedFile(null);
+    setCloudinaryUrl(null);
+    setPublicId(null);
+    setOriginalSize(0);
+    setCaptionData(null);
+
     setIsProcessing(false);
     setIsComplete(false);
     setProgress(0);
-    setCaptionsPreview('');
-    setPlainTextCaptions('');
     setError(null);
-    if (videoPreview) {
-      URL.revokeObjectURL(videoPreview);
-      setVideoPreview(null);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+
+    toast.success("Reset done!");
   };
 
   if (isPageLoading) {
@@ -174,181 +139,168 @@ export default function GenerateCaptionsPage() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 via-white to-rose-50 min-h-screen relative">
-      <Toaster position="top-right" richColors />
+    <div className="bg-gradient-to-br from-pink-50 via-white to-amber-50 min-h-screen">
+      <Toaster />
       <div className="max-w-5xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center mr-4">
-              <Type className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-semibold text-gray-800">Generate Captions</h1>
-              <p className="text-gray-600 mt-1">Auto-generate subtitles for your videos</p>
-            </div>
+        {/* HEADER */}
+        <div className="flex items-center mb-8">
+          <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+            <Video className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold text-gray-800">
+              Generate Captions
+            </h1>
+            <p className="text-gray-600">AI-powered captions for your video</p>
           </div>
         </div>
 
-        {/* Upload Area */}
-        {!selectedFile && (
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-pink-400 hover:bg-pink-50/50 transition-all cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Upload className="w-10 h-10 text-pink-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Drop your video here or click to browse
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Supports MP4, MOV, AVI, WebM (Max 500MB)
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <button className="px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg hover:from-pink-600 hover:to-pink-700 transition-all shadow-sm font-medium">
-              Select Video File
-            </button>
+        {/* UPLOAD AREA */}
+        {!cloudinaryUrl && (
+          <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-pink-400 hover:bg-pink-50/50 transition-all cursor-pointer">
+            <CldUploadWidget
+              uploadPreset="Projects"
+              onSuccess={handleUploadSuccess}
+            >
+              {({ open }) => (
+                <div onClick={() => open()}>
+                  <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Upload className="w-10 h-10 text-pink-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    Click to upload video
+                  </h3>
+                  <p className="text-gray-600">
+                    MP4, MOV, AVI, WebM (Max 500MB)
+                  </p>
+                </div>
+              )}
+            </CldUploadWidget>
           </div>
         )}
 
-        {/* Processing / Result Area */}
-        {selectedFile && (
-          <div className="space-y-6">
-            {/* Video Info Card */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <FileVideo className="w-6 h-6 text-pink-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800 mb-1">{selectedFile.name}</h3>
-                      <p className="text-sm text-gray-600">Size: {formatFileSize(selectedFile.size)}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleReset}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    disabled={isProcessing}
-                  >
-                    <X className="w-5 h-5 text-gray-600" />
-                  </button>
+        {/* MAIN CONTENT */}
+        {cloudinaryUrl && (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            {/* TOP BAR */}
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <FileVideo className="w-6 h-6 text-pink-500" />
                 </div>
 
-                {/* Video Preview */}
-                {videoPreview && (
-                  <div className="mb-6">
-                    <video src={videoPreview} controls className="w-full rounded-lg bg-black" style={{ maxHeight: '400px' }} />
+                <div>
+                  <h3 className="font-semibold text-gray-800">{publicId}</h3>
+                  <p className="text-sm text-gray-600">
+                    Original size: {formatFileSize(originalSize)}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleReset}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+                disabled={isProcessing}
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Preview Video */}
+            {!isComplete && (
+              <video
+                src={cloudinaryUrl}
+                controls
+                className="w-full rounded-lg bg-black mb-6"
+                style={{ maxHeight: "400px" }}
+              />
+            )}
+
+            {/* ERROR */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-6 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
+
+            {/* PROCESSING */}
+            {isProcessing && (
+              <>
+                <div className="flex justify-center gap-3 py-6">
+                  <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                  <span className="text-lg text-gray-700">
+                    Generating captions…
+                  </span>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Progress</span>
+                    <span>{progress}%</span>
                   </div>
-                )}
 
-                {/* Error State */}
-                {error && (
-                  <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-red-800 mb-1">Caption Generation Failed</h4>
-                      <p className="text-sm text-red-700">{error}</p>
-                    </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-pink-500 to-pink-600"
+                      style={{ width: `${progress}%` }}
+                    />
                   </div>
-                )}
+                </div>
+              </>
+            )}
 
-                {/* Processing State */}
-                {isProcessing && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-center space-x-3 py-6">
-                      <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
-                      <span className="text-lg font-medium text-gray-700">Generating captions...</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm text-gray-600">
-                        <span>Progress</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-pink-500 to-pink-600 transition-all duration-300" style={{ width: `${progress}%` }} />
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600 text-center">
-                      {progress < 30 && 'Uploading video...'}
-                      {progress >= 30 && progress < 60 && 'Analyzing audio...'}
-                      {progress >= 60 && progress < 90 && 'Transcribing speech...'}
-                      {progress >= 90 && 'Finalizing captions...'}
-                    </div>
-                  </div>
-                )}
+            {/* COMPLETE */}
+            {isComplete && captionData && (
+              <>
+                <div className="bg-green-50 border border-green-200 p-4 rounded-lg mb-6 flex gap-3">
+                  <Check className="w-5 h-5 text-green-600" />
+                  <p className="text-green-700">
+                    Captions generated successfully!
+                  </p>
+                </div>
 
-                {/* Completion State */}
-                {isComplete && (
-                  <div className="space-y-4">
-                    {/* Success Banner */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Check className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-green-800 mb-1">Captions Generated Successfully!</h4>
-                        <p className="text-sm text-green-700">Your subtitle file is ready to download or copy</p>
-                      </div>
-                    </div>
+                {/* Caption Output */}
+                <h4 className="text-xl text-black font-semibold mb-3">
+                  Generated Captions
+                </h4>
+                <pre className="bg-gray-50 p-4 rounded-lg text-gray-700 text-sm whitespace-pre-wrap">
+                  {captionData.text}
+                </pre>
 
-                    {/* Captions Preview */}
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-gray-800 flex items-center">
-                          <FileText className="w-5 h-5 mr-2 text-pink-500" /> Caption Preview (SRT)
-                        </h4>
-                        <span className="text-sm text-gray-600">SRT Format</span>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 max-h-64 overflow-y-auto">
-                        <pre className="text-sm text-gray-700 font-mono whitespace-pre-wrap">{captionsPreview}</pre>
-                      </div>
-                    </div>
-
-                    {/* Copy Plain Text */}
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={handleCopyPlainText}
-                        className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all"
-                      >
-                        <Copy className="w-4 h-4" />
-                        <span>Copy Captions</span>
-                      </button>
-
-                      <button
-                        onClick={handleDownloadSRT}
-                        className="flex items-center space-x-2 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-all"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>Download SRT</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Generate Button */}
-                {!isProcessing && !isComplete && (
+                {/* DOWNLOAD CAPTION FILE */}
+                {captionData.srtContent && (
                   <button
-                    onClick={handleGenerate}
-                    disabled={isProcessing}
-                    className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg hover:from-pink-600 hover:to-pink-700 transition-all shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      const blob = new Blob([captionData.srtContent], {
+                        type: "text/plain",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = publicId + "_captions.srt";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg mt-4"
                   >
-                    <Type className="w-5 h-5" />
-                    <span>Generate Captions</span>
+                    <Download className="w-5 h-5" />
+                    Download Captions
                   </button>
                 )}
-              </div>
-            </div>
+              </>
+            )}
+
+            {/* BUTTON */}
+            {!isProcessing && !isComplete && (
+              <button
+                onClick={handleGenerateCaptions}
+                className="w-full px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg flex items-center justify-center gap-2"
+              >
+                <Video className="w-5 h-5" />
+                Generate Captions
+              </button>
+            )}
           </div>
         )}
       </div>

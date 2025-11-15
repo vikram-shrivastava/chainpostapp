@@ -1,22 +1,31 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-export async function handleGenerateCaption(file) {
+export async function handleGenerateCaption(videoUrl) {
     try {
         const { userId } = await auth();
         if (!userId) {
             throw new Error("Unauthorized");
         }
-        const form = new FormData();
-        form.append("file", file, file.name);
-        const getCaptions=await fetch(`http://localhost:4000/transcribe`,{ method: "POST",body: form});
-        if(!getCaptions){
-            return NextResponse.json({ message: 'Failed to get captions' }, { status: 500 });
+
+        // Send video URL instead of file
+        const response = await fetch(`http://localhost:4000/transcribe`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: videoUrl }),
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            return NextResponse.json({ message: err.message || 'Failed to get captions' }, { status: 500 });
         }
-        const { captions,srt } = await getCaptions.json();
-        console.log("captionoutput",captions)
-        return ({captions:captions,srt:srt, message:'Captions Generated Successfully', status: 200 });
+
+        const { captions, srt } = await response.json();
+        console.log("captionoutput", captions);
+
+        return { captions, srt, message: 'Captions Generated Successfully', status: 200 };
     } catch (error) {
-        return NextResponse.json({ message: 'Failed to generate captions' }, { status: 500 });
+        console.error("Error in handleGenerateCaption:", error);
+        return NextResponse.json({ message: 'Failed to generate captions', error: error.message || error }, { status: 500 });
     }
 }
