@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from '@/db';
-import User from "@/models/User.model";
+import UserModel from "@/models/User.model";
 export const POST = async (request) => {
 try {
     await dbConnect();
@@ -22,7 +22,7 @@ try {
     if(!username || !fullname || !email  || !photoUrl){
         return NextResponse.json({message:"All the fields are required"})
     }
-    const newUser = new User({
+    const newUser = new UserModel({
       name: fullname,
       username: username,
       email: email,
