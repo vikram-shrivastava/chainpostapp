@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/db";
-import UserModel from "@/models/User.model.js";
+import User from "@/models/User.model.js";
 export async function POST(req) {
   await dbConnect();
   try {
@@ -11,7 +11,7 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const user = await UserModel.findOneAndUpdate(
+    const user = await User.findOneAndUpdate(
       { clerkuserid: userId },
       {
         $set: {
@@ -43,7 +43,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const userdetails = await UserModel.findOne({ clerkuserid: userId })
+    const userdetails = await User.findOne({ clerkuserid: userId })
       .select("preferences notifications storage billing");
 
     if (!userdetails) {
