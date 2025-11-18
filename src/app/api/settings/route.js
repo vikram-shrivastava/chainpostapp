@@ -11,7 +11,7 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const user = await User.findOneAndUpdate(
+    const user = await UserModel.findOneAndUpdate(
       { clerkuserid: userId },
       {
         $set: {
