@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { handleGeneratePost } from "@/utils/handleGeneratePost";
 import dbConnect from '@/db';
-import Project from "@/models/project.model";
+import Project from "@/models/project.model.js";
 
 export async function POST(request) {
   await dbConnect();

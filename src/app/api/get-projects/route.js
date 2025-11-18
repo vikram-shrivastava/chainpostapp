@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Project from '@/models/project.model';
+import Project from '@/models/project.model.js';
 import dbConnect from '@/db';
 import { auth } from "@clerk/nextjs/server";
 

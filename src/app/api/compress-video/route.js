@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 import dbConnect from "@/db";
-import Project from "@/models/project.model";
+import Project from "@/models/project.model.js";
 import { nanoid } from "nanoid"; // for unique short IDs
 
 cloudinary.config({

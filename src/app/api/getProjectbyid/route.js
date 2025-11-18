@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import dbConnect from '@/db';
-import Project from '@/models/project.model';
+import Project from '@/models/project.model.js';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {

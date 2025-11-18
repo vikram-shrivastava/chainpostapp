@@ -1,3 +1,4 @@
+'use client'
 import React from "react";
 import { UserProfile } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
