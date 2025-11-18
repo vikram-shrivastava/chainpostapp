@@ -33,5 +33,5 @@ const userSchema = new Schema({
   projects: [{ type: Schema.Types.ObjectId, ref: 'Project' }],
 }, { timestamps: true });
 
-const UserModel =  mongoose.models.User || mongoose.model('User', userSchema);
-export default UserModel;
+const User =  mongoose.models.User || mongoose.model('User', userSchema);
+export default User;
