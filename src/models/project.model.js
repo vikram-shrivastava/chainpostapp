@@ -18,7 +18,7 @@ const projectSchema = new Schema({
 
   // Caption / Post text
   generatedCaptions: { type: String },
-  generatedPostText: { type: String },
+  generatedPostText: { type: Object },
 
   // Metadata for UI
   status: {

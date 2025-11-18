@@ -6,30 +6,26 @@ import {
   FileVideo,
   Video,
   Loader2,
-  Check,
   X,
-  Download,
   AlertCircle,
+  Home,
+  Clock,
 } from "lucide-react";
 
 import { Toaster, toast } from "sonner";
 import { CldUploadWidget } from "next-cloudinary";
+import { useRouter } from "next/navigation";
 
 export default function GenerateCaptionsPage() {
+  const router = useRouter();
+
   const [isPageLoading, setIsPageLoading] = useState(true);
 
-  // Upload states
   const [cloudinaryUrl, setCloudinaryUrl] = useState(null);
   const [publicId, setPublicId] = useState(null);
   const [originalSize, setOriginalSize] = useState(0);
 
-  // Processing states
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  // Result states
-  const [captionData, setCaptionData] = useState(null);
+  const [isQueued, setIsQueued] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -46,41 +42,26 @@ export default function GenerateCaptionsPage() {
       setPublicId(info.public_id);
       setOriginalSize(info.bytes);
 
-      setIsComplete(false);
-      setProgress(0);
+      setIsQueued(false);
       setError(null);
-      setCaptionData(null);
 
-      toast.success("Video uploaded successfully! Now generate captions.");
+      toast.success("Video uploaded successfully!");
     }
   };
 
-  // Format file size
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / k ** i) * 100) / 100 + " " + sizes[i];
   };
 
-  // Generate Captions
+  // Generate Captions (Queue)
   const handleGenerateCaptions = async () => {
     if (!publicId) return toast.error("Upload a video first!");
 
-    setIsProcessing(true);
-    setProgress(0);
     setError(null);
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 8;
-      });
-    }, 400);
 
     try {
       const response = await fetch("/api/generate-captions", {
@@ -93,38 +74,30 @@ export default function GenerateCaptionsPage() {
         }),
       });
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message);
-      }
-
       const data = await response.json();
 
-      setProgress(100);
-      setCaptionData(data);
-      setIsComplete(true);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to enqueue job");
+      }
 
-      toast.success("Captions generated successfully!");
+      toast.success("Your caption job has been queued!");
+
+      // Queue UI
+      setIsQueued(true);
+
     } catch (err) {
       console.error(err);
       setError(err.message);
       toast.error(err.message);
-      setProgress(0);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  // Reset state
   const handleReset = () => {
     setCloudinaryUrl(null);
     setPublicId(null);
     setOriginalSize(0);
-    setCaptionData(null);
 
-    setIsProcessing(false);
-    setIsComplete(false);
-    setProgress(0);
+    setIsQueued(false);
     setError(null);
 
     toast.success("Reset done!");
@@ -142,6 +115,7 @@ export default function GenerateCaptionsPage() {
     <div className="bg-gradient-to-br from-pink-50 via-white to-amber-50 min-h-screen">
       <Toaster />
       <div className="max-w-5xl mx-auto px-6 py-12">
+
         {/* HEADER */}
         <div className="flex items-center mb-8">
           <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center mr-4">
@@ -151,7 +125,7 @@ export default function GenerateCaptionsPage() {
             <h1 className="text-3xl font-semibold text-gray-800">
               Generate Captions
             </h1>
-            <p className="text-gray-600">AI-powered captions for your video</p>
+            <p className="text-gray-600">AI-powered captions with Queue Processing</p>
           </div>
         </div>
 
@@ -182,6 +156,7 @@ export default function GenerateCaptionsPage() {
         {/* MAIN CONTENT */}
         {cloudinaryUrl && (
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+
             {/* TOP BAR */}
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-start gap-4">
@@ -200,14 +175,14 @@ export default function GenerateCaptionsPage() {
               <button
                 onClick={handleReset}
                 className="p-2 hover:bg-gray-100 rounded-lg"
-                disabled={isProcessing}
+                disabled={isQueued}
               >
                 <X className="w-5 h-5 text-gray-600" />
               </button>
             </div>
 
-            {/* Preview Video */}
-            {!isComplete && (
+            {/* Video Preview */}
+            {!isQueued && (
               <video
                 src={cloudinaryUrl}
                 controls
@@ -224,75 +199,39 @@ export default function GenerateCaptionsPage() {
               </div>
             )}
 
-            {/* PROCESSING */}
-            {isProcessing && (
-              <>
-                <div className="flex justify-center gap-3 py-6">
-                  <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
-                  <span className="text-lg text-gray-700">
-                    Generating captions…
-                  </span>
+            {/* QUEUE PROCESSING UI */}
+            {isQueued && (
+              <div className="text-center py-10">
+                <div className="flex justify-center mb-4">
+                  <Loader2 className="w-10 h-10 text-pink-500 animate-spin" />
                 </div>
 
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Progress</span>
-                    <span>{progress}%</span>
-                  </div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                  Your captions are being generated…
+                </h2>
 
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-pink-500 to-pink-600"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
+                <p className="text-gray-600 mb-6">
+                  You can safely leave this page.  
+                  The result will appear in your Dashboard once completed.
+                </p>
+
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg"
+                >
+                  <Home className="w-5 h-5" />
+                  Go to Dashboard
+                </button>
+
+                <div className="mt-6 flex justify-center gap-2 text-gray-500 text-sm">
+                  <Clock className="w-4 h-4" />
+                  <span>Processing typically takes a few seconds to 2 minutes</span>
                 </div>
-              </>
+              </div>
             )}
 
-            {/* COMPLETE */}
-            {isComplete && captionData && (
-              <>
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg mb-6 flex gap-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <p className="text-green-700">
-                    Captions generated successfully!
-                  </p>
-                </div>
-
-                {/* Caption Output */}
-                <h4 className="text-xl text-black font-semibold mb-3">
-                  Generated Captions
-                </h4>
-                <pre className="bg-gray-50 p-4 rounded-lg text-gray-700 text-sm whitespace-pre-wrap">
-                  {captionData.text}
-                </pre>
-
-                {/* DOWNLOAD CAPTION FILE */}
-                {captionData.srtContent && (
-                  <button
-                    onClick={() => {
-                      const blob = new Blob([captionData.srtContent], {
-                        type: "text/plain",
-                      });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = publicId + "_captions.srt";
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg mt-4"
-                  >
-                    <Download className="w-5 h-5" />
-                    Download Captions
-                  </button>
-                )}
-              </>
-            )}
-
-            {/* BUTTON */}
-            {!isProcessing && !isComplete && (
+            {/* GENERATE BUTTON */}
+            {!isQueued && (
               <button
                 onClick={handleGenerateCaptions}
                 className="w-full px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg flex items-center justify-center gap-2"

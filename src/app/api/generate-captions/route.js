@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { handleGenerateCaption } from "@/utils/handleGenerateCaptions";
 import dbConnect from '@/db';
-import Project from '@/models/project.model.js';
+import { Client } from "@upstash/qstash";
 
 export async function POST(request) {
     await dbConnect();
+
+    // QStash client pointing to local dev server
+    const client = new Client({
+        token: process.env.QSTASH_TOKEN
+    });
+
     try {
         const { userId } = await auth();
         if (!userId) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get JSON from frontend
         const body = await request.json();
         const { publicId, cloudinaryUrl, originalSize } = body;
 
@@ -20,34 +24,29 @@ export async function POST(request) {
             return NextResponse.json({ message: "publicId and cloudinaryUrl are required" }, { status: 400 });
         }
 
-        // Generate captions
-        const result = await handleGenerateCaption(cloudinaryUrl);
-        if (!result) {
-            return NextResponse.json({ message: "Cannot generate captions" }, { status: 500 });
-        }
-
-        const { captions, srt } = result; // srt is raw SRT content
-
-        // Save project in DB
-        const currproject = new Project({
-            type: 'videoCaption',
-            ownerClerkUserId: userId,
-            generatedCaptions: captions || "",
-            srtFileUrl: "", // we no longer need a hosted URL
-            format: 'srt',
-            projectTitle: publicId + "_Captions",
-            fileName: publicId,
-            fileSizeMB: parseFloat((originalSize / (1024 * 1024)).toFixed(2)) || 0,
-            userIP: request.headers.get('x-forwarded-for') || 'Unknown',
-            browser: request.headers.get('user-agent') || 'Unknown',
+        // Use the **local subscription URL** for QStash dev server
+        const result = await client.publishJSON({
+            url: "https://irremediable-sherice-abstrusely.ngrok-free.dev/api/handleGenerateCaptions", // <--- local ngrok endpoint
+            body: {
+                CloudinaryURL: cloudinaryUrl,
+                PublicId: publicId,
+                OriginalSize: originalSize,
+                userId
+            },
+            headers: { "Content-Type": "application/json" },
         });
 
-        await currproject.save();
+        if (!result) {
+            return NextResponse.json({
+                message: "Job Queuing Failed",
+                error: result
+            });
+        }
 
+        console.log("Job queued:", result);
         return NextResponse.json({
-            text: captions,
-            srtContent: srt || "",       // raw SRT content for Blob download
-            message: "Caption Generated Successfully",
+            message: "Caption generation job queued successfully",
+            jobId: result.messageId,
             status: 200
         });
 

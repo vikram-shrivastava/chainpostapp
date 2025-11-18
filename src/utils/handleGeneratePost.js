@@ -9,7 +9,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
 
 export async function handleGeneratePost(mediaUrl, platform = "all") {
     try {
-        const captionsRes = await fetch(`http://localhost:4000/transcribe`, {
+        const captionsRes = await fetch(process.env.CAPTION_GENERATION_API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url: mediaUrl }),
