@@ -43,7 +43,7 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const userdetails = await User.findOne({ clerkuserid: userId })
+    const userdetails = await UserModel.findOne({ clerkuserid: userId })
       .select("preferences notifications storage billing");
 
     if (!userdetails) {
