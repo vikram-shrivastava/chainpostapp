@@ -2,6 +2,7 @@
 import React from "react";
 import { UserProfile } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 function page() {
   const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
 

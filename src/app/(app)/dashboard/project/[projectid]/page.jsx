@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { 
-  Image, 
+  Image as ImageIcon, 
   FileText, 
   Download, 
   Clock, 
@@ -14,19 +14,51 @@ import {
   Sparkles,
   ExternalLink,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  Share2,
+  MoreVertical,
+  CheckCircle2,
+  ArrowRight,
+  Maximize2
 } from 'lucide-react';
+import Link from 'next/link';
 
-function Field({ label, children, icon: Icon }) {
+// --- Helper Components ---
+
+function StatCard({ icon: Icon, label, value, color = "indigo" }) {
+  const colorMap = {
+    indigo: "bg-indigo-50 text-indigo-600",
+    blue: "bg-blue-50 text-blue-600", 
+    emerald: "bg-emerald-50 text-emerald-600",
+    amber: "bg-amber-50 text-amber-600",
+    purple: "bg-purple-50 text-purple-600",
+    slate: "bg-slate-100 text-slate-600"
+  };
+
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
-        {Icon && <Icon className="w-3.5 h-3.5" />}
-        {label}
+    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${colorMap[color] || colorMap.slate}`}>
+        <Icon className="w-6 h-6" />
       </div>
-      <div className="text-sm text-slate-900">
-        {children ?? <span className="text-slate-400">—</span>}
+      <div>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">{label}</p>
+        <p className="text-lg font-bold text-slate-900">{value || "—"}</p>
       </div>
+    </div>
+  );
+}
+
+function SectionHeader({ icon: Icon, title, action }) {
+  return (
+    <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+          <Icon className="w-5 h-5 text-slate-700" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+      </div>
+      {action}
     </div>
   );
 }
@@ -42,27 +74,9 @@ function formatSeconds(s) {
   return `${minutes}m ${seconds}s`;
 }
 
-function StatCard({ icon: Icon, label, value, color = "blue" }) {
-  const colorClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    purple: "bg-purple-50 text-purple-600",
-    green: "bg-green-50 text-green-600",
-    orange: "bg-orange-50 text-orange-600"
-  };
-
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
-      <div className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center mb-3`}>
-        <Icon className="w-5 h-5" />
-      </div>
-      <div className="text-xs font-medium text-slate-500 mb-1">{label}</div>
-      <div className="text-lg font-semibold text-slate-900">{value}</div>
-    </div>
-  );
-}
-
 export default function ProjectPage() {
   const { projectid } = useParams();
+  const router = useRouter();
   const [project, setProject] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,7 +88,7 @@ export default function ProjectPage() {
       try {
         setLoading(true);
         const res = await fetch(`/api/getProjectbyid?id=${projectid}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        if (!res.ok) throw new Error(`Project not found`);
         const data = await res.json();
         setProject(data);
       } catch (err) {
@@ -90,34 +104,28 @@ export default function ProjectPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-slate-700">Loading Project...</h2>
-        </div>
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)]">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+        <h2 className="text-lg font-medium text-slate-600">Loading Project Details...</h2>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !project) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 text-center mb-2">Error Loading Project</h2>
-          <p className="text-red-600 text-center">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-          <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+      <div className="flex items-center justify-center h-[calc(100vh-100px)] p-6">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-12 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Project Not Found</h2>
-          <p className="text-slate-600">The project you're looking for doesn't exist.</p>
+          <p className="text-slate-500 mb-8">{error || "The project you are looking for does not exist or has been deleted."}</p>
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors w-full"
+          >
+            Return to Dashboard
+          </button>
         </div>
       </div>
     );
@@ -126,7 +134,7 @@ export default function ProjectPage() {
   const {
     type,
     compressedUrl,
-    fileName = 'Untitled',
+    fileName = 'Untitled Project',
     fileSizeMB,
     compressedSizeMB,
     duration,
@@ -139,211 +147,292 @@ export default function ProjectPage() {
     updatedAt,
   } = project;
 
+  // Configuration for dynamic UI based on project type
   const typeConfig = {
-    videoCompression: { icon: FileVideo, label: 'Video Compression', color: 'blue' },
-    videoCaption: { icon: Captions, label: 'Video Caption', color: 'purple' },
-    generatePost: { icon: Sparkles, label: 'Generate Post', color: 'green' },
-    imageResize: { icon: Image, label: 'Image Resize', color: 'orange' }
+    videoCompression: { 
+      icon: FileVideo, 
+      label: 'Video Compression', 
+      accent: 'text-blue-600', 
+      bg: 'bg-blue-50',
+      border: 'border-blue-100'
+    },
+    videoCaption: { 
+      icon: Captions, 
+      label: 'Auto Captions', 
+      accent: 'text-indigo-600', 
+      bg: 'bg-indigo-50',
+      border: 'border-indigo-100'
+    },
+    generatePost: { 
+      icon: Sparkles, 
+      label: 'AI Post Generator', 
+      accent: 'text-purple-600', 
+      bg: 'bg-purple-50',
+      border: 'border-purple-100'
+    },
+    imageResize: { 
+      icon: Maximize2, 
+      label: 'Magic Resize', 
+      accent: 'text-pink-600', 
+      bg: 'bg-pink-50',
+      border: 'border-pink-100'
+    }
   };
 
-  const config = typeConfig[type] || { icon: FileText, label: type, color: 'blue' };
+  const config = typeConfig[type] || { icon: FileText, label: type, accent: 'text-slate-600', bg: 'bg-slate-50' };
   const TypeIcon = config.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-6xl mx-auto p-6 lg:p-8">
-        {/* Header Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 lg:p-8 mb-6">
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
-            <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 flex-shrink-0 shadow-md">
+    <div className="min-h-full font-['Inter',_sans-serif] pb-12">
+      
+      {/* --- BREADCRUMB & HEADER --- */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <button 
+          onClick={() => router.back()} 
+          className="flex items-center text-sm text-slate-500 hover:text-indigo-600 transition-colors mb-6 group"
+        >
+          <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          Back to Dashboard
+        </button>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 shadow-sm flex flex-col lg:flex-row gap-8 items-start lg:items-center justify-between">
+          
+          <div className="flex items-start gap-6">
+            {/* Thumbnail */}
+            <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative group">
               {thumbnailUrl ? (
-                <img
-                  src={thumbnailUrl}
-                  alt="thumbnail"
-                  className="w-full h-full object-cover"
-                />
+                <img src={thumbnailUrl} alt="Project thumbnail" className="w-full h-full object-cover" />
               ) : (
-                <div className="flex items-center justify-center h-full">
-                  <TypeIcon className="w-12 h-12 text-slate-400" />
+                <div className="flex items-center justify-center h-full text-slate-300">
+                  <ImageIcon className="w-10 h-10" />
                 </div>
               )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
             </div>
+
+            {/* Title & Meta */}
+            <div>
+              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider mb-3 ${config.bg} ${config.accent}`}>
+                <TypeIcon className="w-3.5 h-3.5" />
+                {config.label}
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">{projectTitle || fileName}</h1>
+              <div className="flex items-center gap-4 text-sm text-slate-500">
+                 <span className="flex items-center gap-1.5">
+                   <Calendar className="w-4 h-4" />
+                   Created {new Date(createdAt).toLocaleDateString()}
+                 </span>
+                 <span className="hidden sm:inline text-slate-300">|</span>
+                 <span className="flex items-center gap-1.5">
+                   <Clock className="w-4 h-4" />
+                   Last updated {new Date(updatedAt).toLocaleDateString()}
+                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 w-full lg:w-auto">
+             <button className="flex-1 lg:flex-none items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-colors flex shadow-sm">
+                <Share2 className="w-4 h-4" />
+                Share
+             </button>
+             <button className="px-3 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                <MoreVertical className="w-4 h-4" />
+             </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-8">
+        
+        {/* --- LEFT COLUMN: MAIN CONTENT --- */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* STATS GRID */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            {fileSizeMB && (
+              <StatCard 
+                icon={HardDrive} 
+                label="Original Size" 
+                value={formatMB(fileSizeMB)} 
+                color="slate"
+              />
+            )}
+            {compressedSizeMB && (
+              <StatCard 
+                icon={Download} 
+                label="Optimized Size" 
+                value={formatMB(compressedSizeMB)} 
+                color="emerald"
+              />
+            )}
+            {duration && (
+              <StatCard 
+                icon={Clock} 
+                label="Duration" 
+                value={formatSeconds(duration)} 
+                color="blue"
+              />
+            )}
+            {format && (
+              <StatCard 
+                icon={FileText} 
+                label="Format" 
+                value={format.toUpperCase()} 
+                color="amber"
+              />
+            )}
+          </div>
+
+          {/* DETAILS CARD */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:p-8 min-h-[400px]">
             
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  config.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                  config.color === 'purple' ? 'bg-purple-100 text-purple-700' :
-                  config.color === 'green' ? 'bg-green-100 text-green-700' :
-                  'bg-orange-100 text-orange-700'
-                }`}>
-                  {config.label}
-                </div>
-              </div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2 break-words">
-                {projectTitle || fileName}
-              </h1>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {fileSizeMB && (
-            <StatCard 
-              icon={HardDrive} 
-              label="Original Size" 
-              value={formatMB(fileSizeMB)} 
-              color="blue"
-            />
-          )}
-          {compressedSizeMB && (
-            <StatCard 
-              icon={Download} 
-              label="Compressed Size" 
-              value={formatMB(compressedSizeMB)} 
-              color="green"
-            />
-          )}
-          {duration && (
-            <StatCard 
-              icon={Clock} 
-              label="Duration" 
-              value={formatSeconds(duration)} 
-              color="purple"
-            />
-          )}
-          {format && (
-            <StatCard 
-              icon={FileText} 
-              label="Format" 
-              value={format.toUpperCase()} 
-              color="orange"
-            />
-          )}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Type-specific details */}
+            {/* Video Compression Layout */}
             {type === 'videoCompression' && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileVideo className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-xl font-bold text-slate-900">Compression Details</h2>
+              <>
+                <SectionHeader icon={FileVideo} title="Compression Result" />
+                <div className="space-y-6">
+                   <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                      <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                         <CheckCircle2 className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-900 mb-1">Compression Successful</h3>
+                      <p className="text-slate-500 mb-6">
+                        Reduced by {Math.round(((fileSizeMB - compressedSizeMB) / fileSizeMB) * 100)}%
+                      </p>
+                      
+                      {compressedUrl ? (
+                        <div className="flex justify-center">
+                          <a 
+                            href={compressedUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                          >
+                            <Download className="w-5 h-5" /> Download Optimized Video
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="text-slate-400 text-sm">File preview unavailable</p>
+                      )}
+                   </div>
                 </div>
-                <Field label="Compressed File" icon={Download}>
-                  {compressedUrl ? (
-                    <a 
-                      href={compressedUrl} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                    >
-                      Download compressed file
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  ) : (
-                    <span className="text-slate-400">Not available</span>
-                  )}
-                </Field>
-              </div>
+              </>
             )}
 
+            {/* Video Captions Layout */}
             {type === 'videoCaption' && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Captions className="w-5 h-5 text-purple-600" />
-                  <h2 className="text-xl font-bold text-slate-900">Generated Captions</h2>
+              <>
+                <SectionHeader icon={Captions} title="Transcript & Captions" action={
+                   <button className="text-sm text-indigo-600 font-medium hover:underline">Copy Text</button>
+                } />
+                <div className="relative">
+                   {generatedCaptions ? (
+                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 max-h-[500px] overflow-y-auto">
+                       <pre className="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed text-sm">
+                         {generatedCaptions}
+                       </pre>
+                     </div>
+                   ) : (
+                     <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        No captions generated for this project.
+                     </div>
+                   )}
                 </div>
-                <Field label="Captions / Transcript">
-                  {generatedCaptions ? (
-                    <pre className="whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700 max-h-96 overflow-y-auto">
-                      {generatedCaptions}
-                    </pre>
-                  ) : (
-                    <span className="text-slate-400">No captions generated</span>
-                  )}
-                </Field>
-              </div>
+              </>
             )}
 
+            {/* Post Generator Layout */}
             {type === 'generatePost' && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-green-600" />
-                  <h2 className="text-xl font-bold text-slate-900">Generated Content</h2>
+              <>
+                <SectionHeader icon={Sparkles} title="AI Generated Content" />
+                <div className="grid gap-6">
+                   {generatedPostText ? (
+                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Generated Output</h4>
+                        <div className="prose prose-sm max-w-none text-slate-700">
+                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText}</pre>
+                        </div>
+                     </div>
+                   ) : (
+                     <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        Content generation pending or failed.
+                     </div>
+                   )}
                 </div>
-                <Field label="Post Text">
-                  {generatedPostText ? (
-                    <pre className="whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700">
-                      {generatedPostText}
-                    </pre>
-                  ) : (
-                    <span className="text-slate-400">No post text generated</span>
-                  )}
-                </Field>
-                <Field label="Thumbnail" icon={Image}>
-                  {thumbnailUrl ? (
-                    <a 
-                      href={thumbnailUrl} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                    >
-                      Open thumbnail
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  ) : (
-                    <span className="text-slate-400">None</span>
-                  )}
-                </Field>
-              </div>
+              </>
             )}
 
+            {/* Image Resize Layout */}
             {type === 'imageResize' && (
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Image className="w-5 h-5 text-orange-600" />
-                  <h2 className="text-xl font-bold text-slate-900">Resize Details</h2>
+              <>
+                <SectionHeader icon={ImageIcon} title="Resized Assets" />
+                <div className="bg-slate-50 rounded-xl border border-slate-200 p-8 text-center">
+                   {compressedUrl ? (
+                      <div className="space-y-6">
+                         <img src={compressedUrl} alt="Resized" className="max-h-[300px] mx-auto rounded-lg shadow-sm border border-slate-200" />
+                         <a 
+                            href={compressedUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+                          >
+                            <Download className="w-4 h-4" /> Download Image
+                          </a>
+                      </div>
+                   ) : (
+                      <p className="text-slate-400">Image not available</p>
+                   )}
                 </div>
-                <Field label="Resized Image" icon={Download}>
-                  {compressedUrl ? (
-                    <a 
-                      href={compressedUrl} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                    >
-                      Open resized image
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  ) : (
-                    <span className="text-slate-400">Not available</span>
-                  )}
-                </Field>
-              </div>
+              </>
             )}
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Project Info */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Project Info</h3>
-              <Field label="File Name" icon={FileText}>
-                {fileName}
-              </Field>
-              <Field label="Created On" icon={Calendar}>
-                {createdAt ? new Date(createdAt).toLocaleString() : '—'}
-              </Field>
-              <Field label="Last Updated" icon={Clock}>
-                {updatedAt ? new Date(updatedAt).toLocaleString() : '—'}
-              </Field>
-            </div>
           </div>
         </div>
+
+        {/* --- RIGHT COLUMN: METADATA SIDEBAR --- */}
+        <div className="space-y-6">
+           
+           {/* Project Info Card */}
+           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">File Information</h3>
+              <div className="space-y-4">
+                 <div>
+                    <p className="text-xs text-slate-500 mb-1">File Name</p>
+                    <p className="text-sm font-medium text-slate-900 break-all">{fileName}</p>
+                 </div>
+                 <div className="h-px w-full bg-slate-100" />
+                 <div>
+                    <p className="text-xs text-slate-500 mb-1">Project ID</p>
+                    <p className="text-xs font-mono text-slate-700 bg-slate-100 px-2 py-1 rounded w-fit">{projectid}</p>
+                 </div>
+                 <div className="h-px w-full bg-slate-100" />
+                 <div>
+                    <p className="text-xs text-slate-500 mb-1">Status</p>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
+                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                       Completed
+                    </span>
+                 </div>
+              </div>
+           </div>
+
+           {/* Quick Actions */}
+           <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden">
+              <div className="relative z-10">
+                 <h3 className="font-bold text-lg mb-2">Need changes?</h3>
+                 <p className="text-slate-300 text-sm mb-6">Start a new project using this file as a base.</p>
+                 <button className="w-full py-3 bg-white text-slate-900 rounded-xl font-semibold text-sm hover:bg-slate-100 transition-colors flex items-center justify-center gap-2">
+                    Start New Project <ArrowRight className="w-4 h-4" />
+                 </button>
+              </div>
+              {/* Decorative BG */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2" />
+           </div>
+
+        </div>
+
       </div>
     </div>
   );

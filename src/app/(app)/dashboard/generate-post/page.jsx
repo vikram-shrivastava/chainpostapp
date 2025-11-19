@@ -2,7 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-  Upload, FileText, Download, X, Check, Loader2, FileVideo, Image as ImageIcon, Copy, Sparkles, MessageSquare,
+  Upload, 
+  FileText, 
+  Download, 
+  X, 
+  Check, 
+  Loader2, 
+  FileVideo, 
+  Image as ImageIcon, 
+  Copy, 
+  Sparkles, 
+  MessageSquare,
+  Zap,
+  ChevronRight
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { CldUploadWidget } from "next-cloudinary";
@@ -21,9 +33,36 @@ export default function GeneratePostPage() {
   const fileInputRef = useRef(null);
 
   const platforms = [
-    { id: "linkedin", name: "LinkedIn", icon: "💼", color: "bg-blue-50 border-blue-200 text-blue-700", activeColor: "bg-blue-500 text-white", maxLength: 3000 },
-    { id: "instagram", name: "Instagram", icon: "📸", color: "bg-pink-50 border-pink-200 text-pink-700", activeColor: "bg-gradient-to-br from-purple-500 to-pink-500 text-white", maxLength: 2200 },
-    { id: "twitter", name: "Twitter", icon: "🐦", color: "bg-sky-50 border-sky-200 text-sky-700", activeColor: "bg-sky-500 text-white", maxLength: 280 },
+    { 
+      id: "linkedin", 
+      name: "LinkedIn", 
+      icon: "💼", 
+      color: "text-blue-700", 
+      bg: "bg-blue-50", 
+      border: "border-blue-200",
+      activeClass: "bg-blue-600 text-white shadow-md shadow-blue-200",
+      maxLength: 3000 
+    },
+    { 
+      id: "instagram", 
+      name: "Instagram", 
+      icon: "📸", 
+      color: "text-pink-700", 
+      bg: "bg-pink-50", 
+      border: "border-pink-200",
+      activeClass: "bg-pink-600 text-white shadow-md shadow-pink-200",
+      maxLength: 2200 
+    },
+    { 
+      id: "twitter", 
+      name: "Twitter", 
+      icon: "🐦", 
+      color: "text-sky-700", 
+      bg: "bg-sky-50", 
+      border: "border-sky-200",
+      activeClass: "bg-sky-500 text-white shadow-md shadow-sky-200",
+      maxLength: 280 
+    },
   ];
 
   useEffect(() => {
@@ -87,7 +126,6 @@ export default function GeneratePostPage() {
       }
 
       const data = await response.json();
-      // Ensure parsed object
       setGeneratedPosts(data.generatedPost || {});
       setIsComplete(true);
       toast.success('Posts generated successfully!');
@@ -119,7 +157,7 @@ export default function GeneratePostPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `social-media-posts-${selectedFile?.name?.slice(0,20) || "media"}.txt`;
+    a.download = `social-posts-${selectedFile?.name?.slice(0,20) || "media"}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -136,189 +174,212 @@ export default function GeneratePostPage() {
     setMediaPreview(null);
     setCloudinaryUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-    toast("Reset done!", { description: "You can upload a new file now." });
   };
 
   if (isPageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
-        <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
+      <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 via-white to-indigo-50 min-h-full">
+    <div className="min-h-full font-['Inter',_sans-serif]">
       <Toaster position="top-right" />
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-4">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-semibold text-gray-800">Generate Post</h1>
-              <p className="text-gray-600 mt-1">AI-powered social media content for all platforms</p>
-            </div>
+      
+      {/* --- PAGE HEADER --- */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">AI Post Generator</h1>
+            <p className="text-slate-500 mt-1 text-sm">Turn your videos and images into viral social media posts instantly.</p>
+          </div>
+          
+          {/* Usage Pill */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600 shadow-sm">
+            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+            <span>3 Credits / Generation</span>
           </div>
         </div>
+      </div>
 
-        {/* File Upload */}
+      <div className="max-w-6xl mx-auto">
+
+        {/* --- UPLOAD STATE --- */}
         {!selectedFile && (
-          <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-purple-400 hover:bg-purple-50/50 transition-all cursor-pointer">
+          <div className="group relative bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 transition-all hover:border-indigo-400 hover:bg-indigo-50/10 cursor-pointer">
             <CldUploadWidget uploadPreset="Projects" onSuccess={handleUploadSuccess}>
               {({ open }) => (
-                <button onClick={() => open()} className="focus:outline-none w-full">
-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Upload className="w-10 h-10 text-purple-500" />
+                <button onClick={() => open()} className="flex flex-col items-center justify-center text-center h-64 w-full focus:outline-none">
+                  <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Click to upload media</h3>
-                  <p className="text-gray-600">Supports Images & Videos (Cloudinary)</p>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                    Upload Media
+                  </h3>
+                  <p className="text-slate-500 max-w-xs mx-auto mb-6">
+                    Supports Videos (MP4, MOV) and Images (JPG, PNG). We'll analyze the visual content to write your copy.
+                  </p>
+                  <span className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
+                    Select File
+                  </span>
                 </button>
               )}
             </CldUploadWidget>
           </div>
         )}
 
-        {/* Processing & Generated Posts */}
+        {/* --- WORKSPACE --- */}
         {selectedFile && (
-          <div className="space-y-6">
-            {/* Media Info & Preview */}
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="p-6 flex flex-col space-y-4">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      {fileType === "video" ? (
-                        <FileVideo className="w-6 h-6 text-purple-500" />
-                      ) : (
-                        <ImageIcon className="w-6 h-6 text-purple-500" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800 mb-1">{selectedFile.name}</h3>
-                      <p className="text-sm text-gray-600">{`Size: ${formatFileSize(selectedFile.size)}`}</p>
-                    </div>
-                  </div>
-                  <button onClick={handleReset} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                    <X className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
-
+          <div className="grid lg:grid-cols-5 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            {/* LEFT COLUMN: Media Preview */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-lg ring-1 ring-slate-900/5 relative group">
                 {mediaPreview && (
-                  <div className="mb-6">
-                    {fileType === "video" ? (
-                      <video src={mediaPreview} controls className="w-full rounded-lg bg-black" style={{ maxHeight: "400px" }} />
-                    ) : (
-                      <img src={mediaPreview} alt="Preview" className="w-full rounded-lg object-contain bg-gray-100" style={{ maxHeight: "400px" }} />
-                    )}
-                  </div>
-                )}
-
-                {isProcessing && (
-                  <div className="flex items-center justify-center space-x-3 py-6">
-                    <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                    <span className="text-lg font-medium text-gray-700">Generating posts with AI...</span>
-                  </div>
-                )}
-
-                {!isProcessing && !isComplete && (
-                  <button onClick={handleGenerate} className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm font-medium">
-                    <Sparkles className="w-5 h-5" />
-                    <span>Generate Posts for All Platforms</span>
-                  </button>
+                   fileType === "video" ? (
+                      <video src={mediaPreview} controls className="w-full h-auto object-contain max-h-[400px]" />
+                   ) : (
+                      <img src={mediaPreview} alt="Preview" className="w-full h-auto object-contain max-h-[400px]" />
+                   )
                 )}
               </div>
-            </div>
 
-            {/* Generated Posts */}
-            {isComplete && (
-              <div className="space-y-6">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Check className="w-5 h-5 text-white" />
+              <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    {fileType === "video" ? <FileVideo className="w-5 h-5 text-indigo-600" /> : <ImageIcon className="w-5 h-5 text-indigo-600" />}
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-green-800 mb-1">Posts Generated Successfully!</h4>
-                    <p className="text-sm text-green-700">Your social media posts are ready for all platforms</p>
-                  </div>
-                </div>
-
-                {/* Platform Tabs */}
-                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                  <div className="border-b border-gray-200 p-4">
-                    <div className="flex space-x-2 overflow-x-auto">
-                      {platforms.map((platform) => (
-                        <button
-                          key={platform.id}
-                          onClick={() => setSelectedPlatform(platform.id)}
-                          className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
-                            selectedPlatform === platform.id ? platform.activeColor : platform.color + " border"
-                          }`}
-                        >
-                          {platform.icon} {platform.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    {platforms.map(
-                      (platform) =>
-                        selectedPlatform === platform.id && (
-                          <div key={platform.id} className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <MessageSquare className="w-5 h-5 text-gray-600" />
-                                <h3 className="font-semibold text-gray-800">{platform.name} Post</h3>
-                              </div>
-                              <span className="text-sm text-gray-600">
-                                {generatedPosts[platform.id]?.[`post_text_${platform.id}`]?.length || 0} / {platform.maxLength} characters
-                              </span>
-                            </div>
-
-                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                              <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
-                                {generatedPosts[platform.id]?.[`post_text_${platform.id}`]}
-                              </pre>
-                            </div>
-
-                            <button
-                              onClick={() => handleCopy(platform.id)}
-                              className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg transition-all shadow-sm font-medium ${
-                                copiedPlatform === platform.id
-                                  ? "bg-green-500 text-white"
-                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                              }`}
-                            >
-                              {copiedPlatform === platform.id ? (
-                                <>
-                                  <Check className="w-5 h-5" />
-                                  <span>Copied!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-5 h-5" />
-                                  <span>Copy {platform.name} Post</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )
-                    )}
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-medium text-slate-900 truncate max-w-[180px]">
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                       {formatFileSize(selectedFile.size)}
+                    </p>
                   </div>
                 </div>
-
                 <button
-                  onClick={handleDownloadAll}
-                  className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-sm font-medium"
+                  onClick={handleReset}
+                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Remove file"
                 >
-                  <Download className="w-5 h-5" />
-                  <span>Download All Posts</span>
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            )}
+              
+              {/* Action Button (Left Side if not complete) */}
+              {!isComplete && !isProcessing && (
+                 <button 
+                    onClick={handleGenerate} 
+                    className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 font-semibold"
+                 >
+                    <Sparkles className="w-5 h-5 text-amber-300" />
+                    <span>Generate All Posts</span>
+                 </button>
+              )}
+
+              {/* Processing State */}
+              {isProcessing && (
+                  <div className="bg-white border border-indigo-100 rounded-xl p-6 text-center shadow-sm">
+                      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-3" />
+                      <h3 className="font-medium text-slate-900">Analyzing Content...</h3>
+                      <p className="text-xs text-slate-500 mt-1">Our AI is watching your video to write the perfect captions.</p>
+                  </div>
+              )}
+            </div>
+
+            {/* RIGHT COLUMN: Results */}
+            <div className="lg:col-span-3">
+                {/* Default Placeholder */}
+                {!isComplete && !isProcessing && (
+                    <div className="h-full min-h-[300px] bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-center p-8">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                            <MessageSquare className="w-8 h-8 text-slate-300" />
+                        </div>
+                        <h3 className="text-slate-900 font-medium mb-1">No Posts Generated Yet</h3>
+                        <p className="text-sm text-slate-500 max-w-xs">Upload your media and click 'Generate' to see AI-written posts for LinkedIn, Instagram, and Twitter.</p>
+                    </div>
+                )}
+
+                {/* Results View */}
+                {isComplete && (
+                    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
+                        {/* Success Header */}
+                        <div className="bg-emerald-50 border-b border-emerald-100 px-6 py-3 flex items-center gap-2">
+                            <Check className="w-4 h-4 text-emerald-600" />
+                            <span className="text-sm font-medium text-emerald-800">Content Generated Successfully</span>
+                        </div>
+
+                        {/* Platform Tabs */}
+                        <div className="border-b border-slate-200 p-2 bg-slate-50/50">
+                            <div className="flex space-x-2 overflow-x-auto scrollbar-none">
+                                {platforms.map((platform) => (
+                                    <button
+                                        key={platform.id}
+                                        onClick={() => setSelectedPlatform(platform.id)}
+                                        className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all flex items-center gap-2 ${
+                                            selectedPlatform === platform.id 
+                                                ? platform.activeClass
+                                                : `bg-white text-slate-600 hover:bg-slate-100 border border-slate-200`
+                                        }`}
+                                    >
+                                        <span>{platform.icon}</span>
+                                        {platform.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 p-6 bg-white">
+                           {platforms.map((platform) => 
+                              selectedPlatform === platform.id && (
+                                  <div key={platform.id} className="animate-in fade-in duration-300">
+                                      <div className="flex items-center justify-between mb-4">
+                                          <h3 className="font-bold text-slate-800 text-lg">{platform.name} Draft</h3>
+                                          <span className={`text-xs font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-500`}>
+                                              {generatedPosts[platform.id]?.[`post_text_${platform.id}`]?.length || 0} / {platform.maxLength} chars
+                                          </span>
+                                      </div>
+
+                                      <div className="relative group">
+                                          <textarea
+                                              readOnly
+                                              className="w-full h-64 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                              value={generatedPosts[platform.id]?.[`post_text_${platform.id}`] || "Generating content..."}
+                                          />
+                                          
+                                          <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <button 
+                                                onClick={() => handleCopy(platform.id)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm text-xs font-medium text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+                                              >
+                                                  {copiedPlatform === platform.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                                  {copiedPlatform === platform.id ? "Copied" : "Copy Text"}
+                                              </button>
+                                          </div>
+                                      </div>
+                                  </div>
+                              )
+                           )}
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                            <button
+                                onClick={handleDownloadAll}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                <Download className="w-4 h-4" />
+                                Download All (.txt)
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
           </div>
         )}
       </div>

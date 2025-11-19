@@ -1,11 +1,30 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {Loader2, HelpCircle, Search, Book, MessageCircle, Mail, Video, ChevronDown, ChevronUp, ExternalLink, FileText, Zap, Clock, CheckCircle } from 'lucide-react';
+import {
+  Loader2, 
+  HelpCircle, 
+  Search, 
+  Book, 
+  MessageCircle, 
+  Mail, 
+  Video, 
+  ChevronDown, 
+  ChevronUp, 
+  ExternalLink, 
+  FileText, 
+  Zap, 
+  Clock, 
+  CheckCircle,
+  Send,
+  LifeBuoy,
+  Sparkles,
+  Smartphone
+} from 'lucide-react';
+import { Toaster, toast } from 'sonner';
 
 export default function HelpPage() {
-
-  const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [expandedFaq, setExpandedFaq] = useState(null);
@@ -16,15 +35,14 @@ export default function HelpPage() {
     message: ''
   });
 
-    useEffect(() => {
-    // Simulate page loading
+  useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
   const categories = [
     { id: 'all', name: 'All Topics', icon: Book },
-    { id: 'compress', name: 'Video Compression', icon: Video },
+    { id: 'compress', name: 'Compression', icon: Video },
     { id: 'captions', name: 'Captions', icon: FileText },
     { id: 'posts', name: 'Social Posts', icon: MessageCircle },
     { id: 'resize', name: 'Image Resize', icon: Zap },
@@ -34,89 +52,76 @@ export default function HelpPage() {
     {
       id: 1,
       category: 'compress',
-      question: 'What video formats are supported for compression?',
+      question: 'What video formats are supported?',
       answer: 'We support MP4, MOV, AVI, WebM, and MKV formats. Maximum file size is 500MB for free users and 5GB for Pro users.'
     },
     {
       id: 2,
       category: 'compress',
-      question: 'Will video compression reduce quality?',
-      answer: 'Our AI-powered compression maintains high quality while reducing file size by up to 60%. You can choose between different quality presets based on your needs.'
+      question: 'Does compression reduce visual quality?',
+      answer: 'Our smart compression algorithm is "visually lossless", meaning it removes redundant data that the human eye can\'t see, reducing file size by up to 80% while keeping the image crisp.'
     },
     {
       id: 3,
       category: 'captions',
-      question: 'What languages are supported for caption generation?',
-      answer: 'We currently support English, Spanish, French, German, Italian, Portuguese, and Japanese. More languages are being added regularly.'
+      question: 'Which languages can be auto-detected?',
+      answer: 'We currently support automatic detection for English, Spanish, French, German, Italian, Portuguese, Japanese, and 20+ other major languages.'
     },
     {
       id: 4,
       category: 'captions',
-      question: 'How accurate are the auto-generated captions?',
-      answer: 'Our AI achieves 90-95% accuracy for clear audio. We recommend reviewing and editing captions before publishing for best results.'
+      question: 'Can I edit captions after generation?',
+      answer: 'Yes. Currently, we burn captions directly into the video, but we are rolling out an interactive editor next week that lets you tweak text before rendering.'
     },
     {
       id: 5,
       category: 'posts',
-      question: 'Can I customize the generated social media posts?',
-      answer: 'Yes! All generated content can be edited before copying or downloading. You can adjust the tone, length, and style to match your brand voice.'
+      question: 'How does the AI know my brand voice?',
+      answer: 'The AI analyzes the visual style, pacing, and audio of your video to match the tone. You can also provide custom instructions in the settings panel.'
     },
     {
       id: 6,
-      category: 'posts',
-      question: 'Which social media platforms are supported?',
-      answer: 'We generate optimized content for LinkedIn, Instagram, Twitter, Facebook, and TikTok, with platform-specific formatting and hashtags.'
+      category: 'resize',
+      question: 'Does resizing crop my images?',
+      answer: 'Yes, we use "Smart Crop" technology to keep the most important subject (like a person or product) centered when converting landscape images to vertical formats.'
     },
     {
       id: 7,
-      category: 'resize',
-      question: 'What image formats can I resize?',
-      answer: 'We support JPG, PNG, WebP, and GIF formats. Maximum file size is 10MB.'
-    },
-    {
-      id: 8,
-      category: 'resize',
-      question: 'Will resizing affect image quality?',
-      answer: 'We use smart algorithms to maintain image quality while resizing. Images are optimized for each platform\'s specifications.'
-    },
-    {
-      id: 9,
       category: 'all',
-      question: 'How do I upgrade to Pro?',
-      answer: 'Go to Settings > Billing and click "Upgrade Plan". Choose the Pro plan and complete the payment process.'
-    },
-    {
-      id: 10,
-      category: 'all',
-      question: 'Is my data secure?',
-      answer: 'Yes! All uploads are encrypted and automatically deleted after 24 hours. We never share your data with third parties.'
+      question: 'Is my uploaded data secure?',
+      answer: 'Absolutely. All files are processed in secure, ephemeral containers and are permanently deleted from our servers 24 hours after processing.'
     },
   ];
 
-  const quickGuides = [
+  // Static content cards instead of blog links
+  const quickTips = [
     {
-      title: 'Getting Started',
-      description: 'Learn the basics of using our platform',
-      duration: '5 min read',
-      link: '#'
+      title: 'Smart Compression',
+      description: 'For best results, upload raw footage directly from your camera. Avoid re-compressing already compressed files.',
+      icon: Zap,
+      color: 'text-amber-500',
+      bg: 'bg-amber-50'
     },
     {
-      title: 'Video Compression Guide',
-      description: 'Best practices for compressing videos',
-      duration: '8 min read',
-      link: '#'
+      title: 'Caption Accuracy',
+      description: 'Ensure clear audio with minimal background noise to achieve 98%+ accuracy in auto-generated subtitles.',
+      icon: FileText,
+      color: 'text-indigo-500',
+      bg: 'bg-indigo-50'
     },
     {
-      title: 'Creating Perfect Captions',
-      description: 'Tips for generating accurate subtitles',
-      duration: '6 min read',
-      link: '#'
+      title: 'Viral Formats',
+      description: 'Vertical videos (9:16) perform 3x better on social media. Use our Magic Resize tool to adapt content instantly.',
+      icon: Smartphone, // Assuming Smartphone is imported or use Video
+      color: 'text-pink-500',
+      bg: 'bg-pink-50'
     },
     {
-      title: 'Social Media Content Strategy',
-      description: 'Maximize engagement with AI posts',
-      duration: '10 min read',
-      link: '#'
+      title: 'Batch Processing',
+      description: 'Pro users can upload up to 50 images at once for resizing. Great for processing event photos quickly.',
+      icon: Book,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-50'
     },
   ];
 
@@ -129,253 +134,264 @@ export default function HelpPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert('Support ticket submitted! We\'ll respond within 24 hours.');
+    toast.success('Message sent! We will reply within 24 hours.');
     setFormData({ name: '', email: '', subject: '', message: '' });
   };
 
-
-    if (isPageLoading) {
+  if (isPageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
-        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
       </div>
     );
   }
 
+  // Helper component for icons if Smartphone isn't imported in main file
+  const SmartphoneIcon = (props) => (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-full">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <HelpCircle className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-semibold text-gray-800 mb-4">How can we help?</h1>
-          <p className="text-gray-600 text-lg">Search for answers or browse our help topics</p>
-        </div>
+    <div className="min-h-full font-['Inter',_sans-serif]">
+      <Toaster position="top-right" />
+      
+      {/* --- HEADER SECTION --- */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-6 py-16 text-center">
+           <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <LifeBuoy className="w-8 h-8 text-indigo-600" />
+           </div>
+           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
+             How can we help you?
+           </h1>
+           <p className="text-slate-500 text-lg max-w-2xl mx-auto mb-10">
+             Search our knowledge base for answers or browse the topics below.
+           </p>
 
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-12">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search for help articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-            />
-          </div>
+           {/* Search Bar */}
+           <div className="max-w-2xl mx-auto relative group">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Ask a question (e.g., 'how to compress video')"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-lg shadow-sm"
+              />
+           </div>
         </div>
+      </div>
 
-        {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            <p className="text-2xl font-bold text-gray-800 mb-1">24/7</p>
-            <p className="text-sm text-gray-600">Support Available</p>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Clock className="w-6 h-6 text-blue-600" />
-            </div>
-            <p className="text-2xl font-bold text-gray-800 mb-1">&lt;2h</p>
-            <p className="text-sm text-gray-600">Avg Response Time</p>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Book className="w-6 h-6 text-purple-600" />
-            </div>
-            <p className="text-2xl font-bold text-gray-800 mb-1">50+</p>
-            <p className="text-sm text-gray-600">Help Articles</p>
-          </div>
-        </div>
+      <div className="max-w-5xl mx-auto px-6 py-12 space-y-16">
 
-        {/* Quick Guides */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Quick Guides</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {quickGuides.map((guide, index) => (
-              <a
-                key={index}
-                href={guide.link}
-                className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
-                    {guide.title}
-                  </h3>
-                  <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                </div>
-                <p className="text-sm text-gray-600 mb-3">{guide.description}</p>
-                <div className="flex items-center text-xs text-gray-500">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {guide.duration}
-                </div>
-              </a>
-            ))}
+        {/* --- STATS ROW --- */}
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+             <div className="p-3 bg-emerald-50 rounded-full mb-4">
+               <CheckCircle className="w-6 h-6 text-emerald-600" />
+             </div>
+             <h3 className="text-2xl font-bold text-slate-900">24/7</h3>
+             <p className="text-slate-500 text-sm">System Status Operational</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+             <div className="p-3 bg-blue-50 rounded-full mb-4">
+               <Clock className="w-6 h-6 text-blue-600" />
+             </div>
+             <h3 className="text-2xl font-bold text-slate-900">&lt; 2 Hours</h3>
+             <p className="text-slate-500 text-sm">Average Support Response</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+             <div className="p-3 bg-purple-50 rounded-full mb-4">
+               <Book className="w-6 h-6 text-purple-600" />
+             </div>
+             <h3 className="text-2xl font-bold text-slate-900">50+ Articles</h3>
+             <p className="text-slate-500 text-sm">Detailed Documentation</p>
           </div>
         </div>
 
-        {/* FAQs Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Frequently Asked Questions</h2>
+        {/* --- PRO TIPS (Static Content) --- */}
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+             <Sparkles className="w-5 h-5 text-amber-500 fill-amber-500" />
+             <h2 className="text-xl font-bold text-slate-900">Pro Tips & Best Practices</h2>
+          </div>
           
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  activeCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
-                }`}
-              >
-                <category.icon className="w-4 h-4" />
-                <span>{category.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* FAQ List */}
-          <div className="space-y-3">
-            {filteredFaqs.map((faq) => (
-              <div key={faq.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <button
-                  onClick={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
-                  className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
-                >
-                  <span className="font-medium text-gray-800 text-left">{faq.question}</span>
-                  {expandedFaq === faq.id ? (
-                    <ChevronUp className="w-5 h-5 text-gray-600 flex-shrink-0 ml-4" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-600 flex-shrink-0 ml-4" />
-                  )}
-                </button>
-                {expandedFaq === faq.id && (
-                  <div className="px-6 pb-6 text-gray-600">
-                    {faq.answer}
-                  </div>
-                )}
+          <div className="grid md:grid-cols-2 gap-6">
+            {quickTips.map((tip, index) => (
+              <div key={index} className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-indigo-200 hover:shadow-md transition-all cursor-default">
+                <div className="flex items-start gap-4">
+                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${tip.bg}`}>
+                      <tip.icon className={`w-5 h-5 ${tip.color}`} />
+                   </div>
+                   <div>
+                      <h3 className="font-semibold text-slate-900 mb-2">{tip.title}</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        {tip.description}
+                      </p>
+                   </div>
+                </div>
               </div>
             ))}
           </div>
-
-          {filteredFaqs.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-600">No results found. Try different keywords or browse all topics.</p>
-            </div>
-          )}
         </div>
 
-        {/* Contact Support Section */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-8">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-6 h-6 text-blue-600" />
+        {/* --- FAQ SECTION --- */}
+        <div className="grid lg:grid-cols-12 gap-8">
+           {/* Sidebar Filters */}
+           <div className="lg:col-span-3">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Categories</h3>
+              <div className="space-y-1">
+                {categories.map((cat) => (
+                   <button
+                     key={cat.id}
+                     onClick={() => setActiveCategory(cat.id)}
+                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                       activeCategory === cat.id 
+                         ? 'bg-indigo-50 text-indigo-700' 
+                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                     }`}
+                   >
+                      <cat.icon className={`w-4 h-4 ${activeCategory === cat.id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                      {cat.name}
+                   </button>
+                ))}
               </div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Still need help?</h2>
-              <p className="text-gray-600">Send us a message and we'll get back to you within 24 hours</p>
-            </div>
+           </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="john@example.com"
-                  />
-                </div>
+           {/* FAQ List */}
+           <div className="lg:col-span-9">
+              <div className="space-y-4">
+                 {filteredFaqs.length > 0 ? (
+                   filteredFaqs.map((faq) => (
+                      <div key={faq.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden transition-shadow hover:shadow-sm">
+                         <button
+                           onClick={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
+                           className="w-full flex items-center justify-between p-5 text-left focus:outline-none"
+                         >
+                            <span className={`font-semibold text-sm md:text-base ${expandedFaq === faq.id ? 'text-indigo-700' : 'text-slate-800'}`}>
+                              {faq.question}
+                            </span>
+                            {expandedFaq === faq.id ? (
+                               <ChevronUp className="w-5 h-5 text-indigo-500 shrink-0 ml-4" />
+                            ) : (
+                               <ChevronDown className="w-5 h-5 text-slate-400 shrink-0 ml-4" />
+                            )}
+                         </button>
+                         {expandedFaq === faq.id && (
+                            <div className="px-5 pb-5 pt-0 text-slate-600 text-sm leading-relaxed border-t border-slate-50/0 animate-in fade-in slide-in-from-top-1">
+                               <div className="h-px w-full bg-slate-100 mb-4" />
+                               {faq.answer}
+                            </div>
+                         )}
+                      </div>
+                   ))
+                 ) : (
+                   <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      <p className="text-slate-500">No answers found for "{searchQuery}"</p>
+                      <button onClick={() => {setSearchQuery(''); setActiveCategory('all')}} className="text-indigo-600 text-sm font-medium mt-2 hover:underline">
+                         Clear filters
+                      </button>
+                   </div>
+                 )}
               </div>
+           </div>
+        </div>
+
+        {/* --- CONTACT FORM --- */}
+        <div className="bg-slate-900 rounded-3xl p-8 md:p-12 text-white overflow-hidden relative">
+           {/* Decor bg */}
+           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+
+           <div className="grid md:grid-cols-2 gap-12 relative z-10">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.subject}
-                  onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="How can we help?"
-                />
+                 <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center mb-6">
+                    <Mail className="w-6 h-6 text-white" />
+                 </div>
+                 <h2 className="text-3xl font-bold mb-4">Still need help?</h2>
+                 <p className="text-slate-300 leading-relaxed mb-8">
+                    Our support team is ready to assist you. Send us a message detailing your issue, and we will get back to you as soon as possible.
+                 </p>
+                 
+                 <div className="space-y-4">
+                    <div className="flex items-center gap-3 text-slate-300">
+                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                       <span className="text-sm">Support Team is Online</span>
+                    </div>
+                    <div className="text-sm text-slate-400">
+                       Email: <a href="#" className="text-white hover:underline">support@nexuscreate.com</a>
+                    </div>
+                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message
-                </label>
-                <textarea
-                  required
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  rows="5"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  placeholder="Describe your issue in detail..."
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm font-medium"
-              >
-                Send Message
-              </button>
-            </form>
 
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <p className="text-center text-sm text-gray-600 mb-4">Or reach us directly</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="mailto:support@yourbrand.com" className="flex items-center space-x-2 text-blue-600 hover:text-blue-700">
-                  <Mail className="w-4 h-4" />
-                  <span>support@yourbrand.com</span>
-                </a>
-                <span className="hidden sm:block text-gray-300">•</span>
-                <a href="#" className="flex items-center space-x-2 text-blue-600 hover:text-blue-700">
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Live Chat</span>
-                </a>
-              </div>
-            </div>
-          </div>
+              <form onSubmit={handleSubmit} className="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-sm">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                       <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Name</label>
+                       <input 
+                         required
+                         value={formData.name}
+                         onChange={(e) => setFormData({...formData, name: e.target.value})}
+                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                         placeholder="Jane Doe"
+                       />
+                    </div>
+                    <div className="space-y-1.5">
+                       <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Email</label>
+                       <input 
+                         type="email"
+                         required
+                         value={formData.email}
+                         onChange={(e) => setFormData({...formData, email: e.target.value})}
+                         className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                         placeholder="jane@example.com"
+                       />
+                    </div>
+                 </div>
+                 <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Subject</label>
+                    <input 
+                       required
+                       value={formData.subject}
+                       onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                       className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       placeholder="I need help with..."
+                    />
+                 </div>
+                 <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-300 uppercase tracking-wider">Message</label>
+                    <textarea 
+                       required
+                       rows={4}
+                       value={formData.message}
+                       onChange={(e) => setFormData({...formData, message: e.target.value})}
+                       className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                       placeholder="Describe your issue in detail..."
+                    />
+                 </div>
+                 <button 
+                   type="submit"
+                   className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-900/20 flex items-center justify-center gap-2"
+                 >
+                    <Send className="w-4 h-4" /> Send Message
+                 </button>
+              </form>
+           </div>
         </div>
 
-        {/* Additional Resources */}
-        <div className="mt-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-8 text-white text-center">
-          <h2 className="text-2xl font-semibold mb-2">Join Our Community</h2>
-          <p className="mb-6 opacity-90">Connect with other users, share tips, and get help from the community</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-              Join Discord
-            </button>
-            <button className="px-6 py-3 bg-white/20 backdrop-blur text-white rounded-lg hover:bg-white/30 transition-colors font-medium">
-              Visit Forum
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

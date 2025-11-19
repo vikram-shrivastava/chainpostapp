@@ -5,51 +5,68 @@ import {
   Type,
   FileText,
   Maximize2,
-  Calendar,
   HardDrive,
-  Film,
   File,
+  Loader2,
+  Plus,
+  ArrowRight,
+  Clock,
+  MoreVertical,
+  Sparkles,
+  ChevronDown
 } from "lucide-react";
+import NewProjectModal from "@/components/newProjectModal";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 export default function DashboardPage() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAllProjects, setShowAllProjects] = useState(false);
+
   const tools = [
     {
       name: "Compress Video",
       icon: Video,
-      color: "bg-orange-50 text-orange-500",
-      description: "Reduce video file size",
+      href: "/dashboard/compress-video",
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "group-hover:border-blue-200",
+      description: "Reduce file size without quality loss",
     },
     {
-      name: "Generate Captions",
+      name: "Auto Captions",
       icon: Type,
-      color: "bg-pink-50 text-pink-500",
-      description: "Auto-generate subtitles",
+      href: "/dashboard/generate-captions",
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+      border: "group-hover:border-indigo-200",
+      description: "Generate subtitles automatically",
     },
     {
-      name: "Generate Post",
+      name: "AI Post Generator",
       icon: FileText,
-      color: "bg-purple-50 text-purple-500",
-      description: "Create social posts",
+      href: "/dashboard/generate-post",
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+      border: "group-hover:border-purple-200",
+      description: "Create viral social media content",
     },
     {
-      name: "Image Resize",
+      name: "Magic Resize",
       icon: Maximize2,
-      color: "bg-teal-50 text-teal-500",
-      description: "Resize images easily",
+      href: "/dashboard/image-resize",
+      color: "text-pink-600",
+      bg: "bg-pink-50",
+      border: "group-hover:border-pink-200",
+      description: "Crop images for any platform",
     },
   ];
 
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isPageLoading, setIsPageLoading] = useState(true); // Loader for initial mount
-
-
-    useEffect(() => {
-    // Simulate page loading
+  useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
@@ -59,14 +76,12 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         const response = await fetch("/api/get-projects");
-        if (!response.ok) {
-          throw new Error("Failed to fetch projects");
-        }
+        if (!response.ok) throw new Error("Failed to fetch projects");
         const data = await response.json();
         setProjects(data);
       } catch (error) {
         console.error("Error fetching projects:", error);
-        toast.error("Failed to fetch projects. Please try again.");
+        toast.error("Could not load recent projects");
       } finally {
         setLoading(false);
       }
@@ -74,248 +89,180 @@ export default function DashboardPage() {
     fetchProjects();
   }, []);
 
-    if (isPageLoading) {
+  if (isPageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
-        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+      <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="bg-gradient-to-br from-blue-100 via-gray-200 to-purple-200 min-h-full relative">
-      {/* Toaster */}
-      <Toaster />
+  const getProjectIcon = (type) => {
+    switch(type) {
+      case 'videoCompression': return Video;
+      case 'videoCaption': return Type;
+      case 'generatePost': return Sparkles;
+      case 'imageResize': return Maximize2;
+      default: return File;
+    }
+  };
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-semibold text-gray-800 mb-6">
-            What will you create today?
-          </h1>
+  // Show only first N projects initially
+  const visibleProjects = showAllProjects ? projects : projects.slice(0, 4);
+
+  return (
+    <div className="min-h-full font-['Inter',_sans-serif] pb-12">
+      <Toaster position="top-right" />
+
+      <div className="max-w-7xl mx-auto space-y-10">
+        
+        {/* HERO SECTION */}
+        <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white shadow-xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full filter blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600/20 rounded-full filter blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+
+          <div className="relative z-10 px-8 py-10 md:px-12 md:py-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+                Welcome back, Creator!
+              </h1>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Ready to create something amazing today? Choose a tool to get started or continue with your recent projects.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="shrink-0 bg-white text-slate-900 hover:bg-indigo-50 px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2 shadow-lg">
+              <Plus className="w-5 h-5" /> New Project
+            </button>
+          </div>
+          <NewProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} /> 
         </div>
 
-        {/* Tools Grid */}
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">
-            Quick Tools
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* TOOLS GRID */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-900">Quick Tools</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {tools.map((tool, index) => (
-              <button
+              <Link 
+                href={tool.href} 
                 key={index}
-                className="flex flex-col items-center justify-center p-6 bg-white rounded-xl hover:shadow-lg transition-all border border-gray-100 group"
+                className={`group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col items-start h-full ${tool.border}`}
               >
-                <div
-                  className={`w-16 h-16 ${tool.color} rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
-                >
-                  <tool.icon className="w-8 h-8" />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${tool.bg} ${tool.color}`}>
+                  <tool.icon className="w-6 h-6" />
                 </div>
-                <span className="text-sm font-medium text-gray-700 mb-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
                   {tool.name}
-                </span>
-                <span className="text-xs text-gray-500">
+                </h3>
+                <p className="text-sm text-slate-500 mb-4 flex-1">
                   {tool.description}
-                </span>
-              </button>
+                </p>
+                <div className="w-full flex items-center justify-between pt-4 border-t border-slate-50 mt-auto">
+                  <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Launch Tool</span>
+                  <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
 
-        {/* Recent Projects Section */}
+        {/* RECENT PROJECTS */}
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Recent Projects
-            </h2>
-            <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-              View all
-            </button>
-          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Recent Projects</h2>
 
-          {/* Loader */}
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+              <Loader2 className="w-8 h-8 animate-spin mb-2" />
+              <p className="text-sm">Loading your work...</p>
             </div>
           ) : projects.length === 0 ? (
-            <p className="text-gray-500 text-center">No projects yet.</p>
+            <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <Sparkles className="w-8 h-8 text-amber-400 fill-amber-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">No projects yet</h3>
+              <p className="text-slate-500 max-w-sm mx-auto mb-6">
+                Your creative journey starts here. Pick a tool above to create your first project!
+              </p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {projects.map((project) => (
-                <Link
-                  key={project._id}
-                  href={`dashboard/project/${project._id}`}
-                  className="group relative bg-white/70 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden hover:-translate-y-1 block"
-                >
-                  {/* Thumbnail or Type Icon */}
-                  <div className="relative aspect-video overflow-hidden">
-                    {project.thumbnailUrl ? (
-                      <>
-                        <img
-                          src={project.thumbnailUrl}
-                          alt={project.projectTitle || "Project thumbnail"}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </>
-                    ) : (
-                      <div
-                        className={`flex items-center justify-center w-full h-full ${
-                          project.type === "videoCompression"
-                            ? "bg-gradient-to-br from-orange-400 to-orange-600"
-                            : project.type === "videoCaption"
-                            ? "bg-gradient-to-br from-pink-400 to-pink-600"
-                            : project.type === "generatePost"
-                            ? "bg-gradient-to-br from-purple-500 to-indigo-600"
-                            : "bg-gradient-to-br from-teal-400 to-emerald-600"
-                        }`}
-                      >
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-white/20 rounded-full blur-xl" />
-                          {project.type === "videoCompression" && (
-                            <Video className="relative w-14 h-14 text-white drop-shadow-lg" />
-                          )}
-                          {project.type === "videoCaption" && (
-                            <Type className="relative w-14 h-14 text-white drop-shadow-lg" />
-                          )}
-                          {project.type === "generatePost" && (
-                            <FileText className="relative w-14 h-14 text-white drop-shadow-lg" />
-                          )}
-                          {project.type === "imageResize" && (
-                            <Maximize2 className="relative w-14 h-14 text-white drop-shadow-lg" />
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {visibleProjects.map((project) => {
+                  const Icon = getProjectIcon(project.type);
+                  return (
+                    <Link 
+                      key={project._id} 
+                      href={`dashboard/project/${project._id}`}
+                      className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+                    >
+                      <div className="aspect-video relative bg-slate-100 overflow-hidden border-b border-slate-100">
+                        {project.thumbnailUrl ? (
+                          <>
+                            <img 
+                              src={project.thumbnailUrl} 
+                              alt={project.projectTitle}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-indigo-900/0 group-hover:bg-indigo-900/10 transition-colors duration-300" />
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-50 group-hover:bg-slate-100 transition-colors">
+                            <Icon className="w-10 h-10 text-slate-300" />
+                          </div>
+                        )}
+                        <div className="absolute top-3 right-3">
+                          <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-lg shadow-sm text-slate-700">
+                            <Icon className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-5 flex flex-col flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                            {project.projectTitle || "Untitled Project"}
+                          </h3>
+                          <button className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors opacity-0 group-hover:opacity-100">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="mt-auto pt-4 flex items-center justify-between text-xs text-slate-500">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" />
+                            {new Date(project.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </div>
+                          {project.fileSizeMB && (
+                            <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                              <HardDrive className="w-3 h-3" />
+                              {project.fileSizeMB.toFixed(1)} MB
+                            </div>
                           )}
                         </div>
                       </div>
-                    )}
+                    </Link>
+                  );
+                })}
+              </div>
 
-                    {/* Type Badge */}
-                    <div
-                      className={`absolute bottom-1 left-1 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm bg-opacity-90 flex items-center gap-1.5 shadow-sm ${
-                        project.type === "videoCompression"
-                          ? "bg-orange-100 text-orange-700"
-                          : project.type === "videoCaption"
-                          ? "bg-pink-100 text-pink-700"
-                          : project.type === "generatePost"
-                          ? "bg-purple-100 text-purple-700"
-                          : "bg-teal-100 text-teal-700"
-                      }`}
-                    >
-                      {project.type === "videoCompression" && (
-                        <Video className="w-3.5 h-3.5" />
-                      )}
-                      {project.type === "videoCaption" && (
-                        <Type className="w-3.5 h-3.5" />
-                      )}
-                      {project.type === "generatePost" && (
-                        <FileText className="w-3.5 h-3.5" />
-                      )}
-                      {project.type === "imageResize" && (
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      )}
-                      <span>
-                        {project.type === "videoCompression"
-                          ? "Video Compression"
-                          : project.type === "videoCaption"
-                          ? "Video Caption"
-                          : project.type === "generatePost"
-                          ? "Generate Post"
-                          : "Image Resize"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Project Info */}
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-800 tracking-tight mb-3 group-hover:text-gray-900">
-                      {project.projectTitle || "Untitled Project"}
-                    </h3>
-
-                    {/* File metadata */}
-                    <div className="space-y-2 mb-3 text-sm text-gray-600">
-                      {project.fileName && (
-                        <p className="flex items-center gap-1.5 truncate">
-                          <File className="w-4 h-4 text-gray-400" />
-                          {project.fileName}
-                        </p>
-                      )}
-                      {project.format && (
-                        <p className="flex items-center gap-1.5">
-                          <Film className="w-4 h-4 text-gray-400" />
-                          Format:{" "}
-                          <span className="font-medium text-gray-700 ml-1">
-                            {project.format}
-                          </span>
-                        </p>
-                      )}
-                      {project.fileSizeMB && (
-                        <p className="flex items-center gap-1.5">
-                          <HardDrive className="w-4 h-4 text-gray-400" />
-                          Size:{" "}
-                          <span className="font-medium text-gray-700 ml-1">
-                            {project.fileSizeMB.toFixed(2)} MB
-                          </span>
-                          {project.compressedSizeMB && (
-                            <>
-                              <span className="text-gray-400 mx-1">→</span>
-                              <span className="font-medium text-green-600">
-                                {project.compressedSizeMB.toFixed(2)} MB
-                              </span>
-                            </>
-                          )}
-                        </p>
-                      )}
-                      {project.duration && (
-                        <p className="flex items-center gap-1.5">
-                          <Video className="w-4 h-4 text-gray-400" />
-                          Duration:{" "}
-                          <span className="font-medium text-gray-700 ml-1">
-                            {`${Math.floor(
-                              project.duration / 60
-                            )}m ${Math.round(project.duration % 60)}s`}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Time info */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <p className="text-xs text-gray-500 font-medium">
-                        {new Date(project.createdAt).toLocaleDateString(
-                          "en-IN",
-                          {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          }
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Subtle hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-blue-500/0 via-blue-500/0 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                </Link>
-              ))}
-            </div>
+              {/* Toggle Down Arrow */}
+              {projects.length > 4 && (
+                <div className="flex justify-center mt-6">
+                  <button 
+                    onClick={() => setShowAllProjects(!showAllProjects)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                  >
+                    <ChevronDown className={`w-5 h-5 transition-transform ${showAllProjects ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
-        </div>
-
-        {/* Empty State for New Users */}
-        <div className="mt-12 text-center p-12 bg-white rounded-xl border border-gray-200">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">✨</span>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Ready to create something amazing?
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Choose a tool above to get started with your first project
-          </p>
-          <button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm font-medium">
-            Start Creating
-          </button>
         </div>
       </div>
     </div>

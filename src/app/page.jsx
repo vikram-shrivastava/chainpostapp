@@ -1,448 +1,396 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Video, Type, FileText, Maximize2, Check, ArrowRight, Menu, X, Zap, Star, Users, Award, Moon, Sun } from 'lucide-react';
+import { useState } from 'react';
+import { 
+  Video, 
+  Type, 
+  FileText, 
+  Maximize2, 
+  Check, 
+  ArrowRight, 
+  Menu, 
+  X, 
+  Zap, 
+  Star, 
+  StarHalf, 
+  Play, 
+  Layers, 
+  Quote 
+} from 'lucide-react';
+
+// --- Reusable Star Rating Component ---
+const StarRating = ({ rating = 5 }) => {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  const emptyStars = 5 - Math.ceil(rating);
+
+  for (let i = 0; i < fullStars; i++) {
+    stars.push(<Star key={`full-${i}`} className="w-4 h-4 fill-amber-400 text-amber-400" />);
+  }
+  if (hasHalfStar) {
+    stars.push(<StarHalf key="half" className="w-4 h-4 fill-amber-400 text-amber-400" />);
+  }
+  for (let i = 0; i < emptyStars; i++) {
+    stars.push(<Star key={`empty-${i}`} className="w-4 h-4 text-gray-200" />);
+  }
+
+  return <div className="flex space-x-1">{stars}</div>;
+};
 
 export default function Homepage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState('light');
 
-  useEffect(() => {
-    // Check for saved theme preference or default to 'light'
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = prefersDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      localStorage.setItem('theme', initialTheme);
-      if (initialTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
+  // ---- DATA ----
   const features = [
     {
       icon: Video,
-      title: 'Video Compression',
-      description: 'Compress videos up to 80% smaller while maintaining crystal-clear quality',
-      color: 'from-orange-400 to-orange-600'
+      title: 'Smart Compression',
+      description: 'Reduce file size by 80% without pixelation. Perfect for 4K uploads.',
+      color: 'bg-blue-50 text-blue-600'
     },
     {
       icon: Type,
       title: 'Auto Captions',
-      description: 'AI-powered transcription with perfect timestamps in SRT format',
-      color: 'from-pink-400 to-pink-600'
+      description: 'Generate subtitles in 30+ languages with 98% accuracy instantly.',
+      color: 'bg-indigo-50 text-indigo-600'
     },
     {
       icon: FileText,
-      title: 'Post Generator',
-      description: 'Generate engaging posts for LinkedIn, Instagram, and Twitter instantly',
-      color: 'from-purple-400 to-purple-600'
+      title: 'AI Copywriting',
+      description: 'Turn a video into a week’s worth of LinkedIn and Twitter posts.',
+      color: 'bg-purple-50 text-purple-600'
     },
     {
       icon: Maximize2,
-      title: 'Image Resize',
-      description: 'Perfect dimensions for every social media platform automatically',
-      color: 'from-teal-400 to-teal-600'
+      title: 'Magic Resize',
+      description: 'One click to convert landscape videos to 9:16 verticals.',
+      color: 'bg-pink-50 text-pink-600'
     },
   ];
 
-  const plans = [
+  const testimonials = [
     {
-      name: 'Free',
-      price: '$0',
-      period: 'forever',
-      description: 'Perfect for trying out our tools',
-      features: [
-        '5 video compressions/month',
-        '10 caption generations/month',
-        '20 posts generations/month',
-        'Basic support',
-        '1GB storage'
-      ],
-      highlighted: false
+      name: "Elena R.",
+      role: "Content Creator",
+      image: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+      quote: "I used to spend 4 hours editing captions. NexusCreate does it in 4 minutes. It's actual magic.",
+      rating: 5
     },
     {
-      name: 'Pro',
-      price: '$29',
-      period: 'per month',
-      description: 'Best for content creators',
-      features: [
-        'Unlimited video compressions',
-        'Unlimited captions',
-        'Unlimited post generations',
-        'Priority support',
-        '10GB storage',
-        'Advanced AI features',
-        'Batch processing'
-      ],
-      highlighted: true
+      name: "Marcus Chen",
+      role: "Growth Lead",
+      image: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
+      quote: "The video compression is lossless. I can't tell the difference, but my upload speeds doubled.",
+      rating: 5
     },
     {
-      name: 'Enterprise',
-      price: 'Custom',
-      period: 'contact us',
-      description: 'For teams and agencies',
-      features: [
-        'Everything in Pro',
-        'Unlimited storage',
-        'API access',
-        'Custom integrations',
-        'Dedicated account manager',
-        'SLA guarantee'
-      ],
-      highlighted: false
+      name: "Sarah Jenkins",
+      role: "Social Manager",
+      image: "https://i.pravatar.cc/150?u=a04258114e29026302d",
+      quote: "The AI post generator captures my tone perfectly. This tool replaced three others in my stack.",
+      rating: 4.5
     }
   ];
 
-  const stats = [
-    { icon: Users, value: '10K+', label: 'Active Users' },
-    { icon: Video, value: '500K+', label: 'Videos Processed' },
-    { icon: Star, value: '4.9/5', label: 'User Rating' },
-    { icon: Award, value: '99.9%', label: 'Uptime' },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-blue-950 dark:to-purple-950 transition-colors duration-300">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
+    <>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      </head>
+
+      <div className="min-h-screen bg-white font-['Inter',_sans-serif] text-slate-900 selection:bg-indigo-100">
+
+        {/* --- NAVBAR --- */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              
+              {/* New Logo & Name */}
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
+                  <Layers className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-slate-900 tracking-tight">
+                  NexusCreate
+                </span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                ChainPost
-              </span>
-            </div>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
-                Features
-              </a>
-              <a href="#pricing" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
-                Pricing
-              </a>
-              <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
-                About
-              </a>
+              {/* Desktop Nav */}
+              <div className="hidden md:flex items-center space-x-8">
+                <a href="#features" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Features</a>
+                <a href="#testimonials" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Stories</a>
+                <a href="#" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">About</a>
+                
+                <div className="h-4 w-px bg-slate-200 mx-2"></div>
+
+                <a href="#" className="text-sm font-medium text-slate-900 hover:text-indigo-600 transition-colors">Log in</a>
+                <a
+                  href="/dashboard"
+                  className="px-5 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 font-semibold text-sm"
+                >
+                  Get Started
+                </a>
+              </div>
+
+              {/* Mobile Menu Toggle */}
               <button
-                onClick={toggleTheme}
-                className="p-2.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg"
               >
-                {theme === 'light' ? <Moon className="w-5 h-5 text-gray-700" /> : <Sun className="w-5 h-5 text-gray-300" />}
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
-              <a href="/dashboard" className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg font-medium">
-                Get Started
-              </a>
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6 dark:text-white" /> : <Menu className="w-6 h-6 dark:text-white" />}
-            </button>
           </div>
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-3">
-              <a href="#features" className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium py-2">
-                Features
-              </a>
-              <a href="#pricing" className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium py-2">
-                Pricing
-              </a>
-              <a href="#" className="block text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium py-2">
-                About
-              </a>
-              <button
-                onClick={toggleTheme}
-                className="w-full flex items-center justify-center p-2.5 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                {theme === 'light' ? (
-                  <>
-                    <Moon className="w-5 h-5 mr-2" />
-                    <span>Dark Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Sun className="w-5 h-5 mr-2" />
-                    <span>Light Mode</span>
-                  </>
-                )}
-              </button>
-              <a href="/dashboard" className="block px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-center font-medium">
+            <div className="md:hidden border-t border-slate-100 bg-white px-6 py-4 space-y-4 shadow-xl">
+              <a href="#features" className="block text-base font-medium text-slate-600">Features</a>
+              <a href="#testimonials" className="block text-base font-medium text-slate-600">Stories</a>
+              <a href="#" className="block text-base font-medium text-slate-600">Log in</a>
+              <a href="/dashboard" className="block w-full py-3 bg-slate-900 text-white text-center rounded-lg font-semibold">
                 Get Started
               </a>
             </div>
           )}
-        </div>
-      </nav>
+        </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/50 rounded-full mb-8">
-              <span className="text-blue-700 dark:text-blue-300 font-semibold text-sm">✨ AI-Powered Content Tools</span>
+        {/* --- HERO SECTION --- */}
+        <section className="pt-32 pb-20 px-6 md:pt-40 md:pb-32 overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16">
+              
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wider mb-8">
+                <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+                v2.0 Now Live
+              </div>
+
+              <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] tracking-tight mb-6">
+                Your Content Workflow, <br className="hidden md:block" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+                  Automated.
+                </span>
+              </h1>
+
+              <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed">
+                Stop juggling five different tools. NexusCreate brings compression, 
+                captioning, and AI resizing into one seamless dashboard.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <a
+                  href="/dashboard"
+                  className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-lg shadow-xl shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+                >
+                  Start Creating Free
+                  <ArrowRight className="w-5 h-5" />
+                </a>
+                <button className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2">
+                  <Play className="w-5 h-5 fill-slate-700" />
+                  Watch Demo
+                </button>
+              </div>
             </div>
 
-            {/* Main Heading */}
-            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight text-gray-900 dark:text-white">
-              Create Content at
-              <br />
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                Lightning Speed
-              </span>
-            </h1>
+            {/* --- AUTOPLAY VIDEO MOCKUP --- */}
+            <div className="relative max-w-5xl mx-auto">
+              {/* Decorative blurs */}
+              <div className="absolute -top-10 -left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+              <div className="absolute -top-10 -right-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+              
+              {/* Browser Window Container */}
+              <div className="relative bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-800/50 ring-1 ring-slate-900/10">
+                {/* Browser Controls */}
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+                  </div>
+                  <div className="mx-auto px-3 py-1 bg-slate-800 rounded-md text-[10px] text-slate-400 font-mono">
+                    nexuscreate.app/dashboard
+                  </div>
+                </div>
 
-            {/* Subheading */}
-            <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-10 max-w-3xl mx-auto">
-              Upload once, get everything. Compress videos, generate captions, create social posts, and resize images - all powered by AI.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-              <a href="/dashboard" className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all flex items-center space-x-2">
-                <span>Start Free Today</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
-              <button className="px-8 py-4 bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-xl font-semibold text-lg border-2 border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all">
-                Watch Demo
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-100 dark:border-slate-700">
-                  <div className="flex items-center justify-center mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50 rounded-lg flex items-center justify-center">
-                      <stat.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                {/* Video Element */}
+                <div className="relative aspect-video bg-slate-900">
+                  {/* Sample video source (Big Buck Bunny is standard for demos) */}
+                  <video 
+                    className="w-full h-full object-cover opacity-90"
+                    autoPlay 
+                    muted 
+                    loop 
+                    playsInline
+                    poster="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=2574&auto=format&fit=crop"
+                  >
+                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  
+                  {/* Overlay gradient for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none"></div>
+                  
+                  {/* Floating UI element mockup */}
+                  <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      AI Captioning Active
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- FEATURES SECTION --- */}
+        <section id="features" className="py-24 bg-slate-50/50">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                Power-packed Tools
+              </h2>
+              <p className="text-lg text-slate-600">
+                We stripped away the complexity. Everything you need to ship content faster is right here.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {features.map((feature, index) => (
+                <div 
+                  key={index} 
+                  className="group bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                >
+                  <div className={`w-14 h-14 rounded-xl ${feature.color} flex items-center justify-center mb-6`}>
+                    <feature.icon className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-6 bg-white dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Everything You Need in One Place
-            </h2>
-            <p className="text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-              Powerful tools designed for modern content creators
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="group bg-gradient-to-br from-gray-50 to-white dark:from-slate-800 dark:to-slate-800 rounded-2xl p-8 border border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-xl transition-all">
-                <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
-                <p className="text-gray-700 dark:text-gray-300">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-              Choose the plan that works best for you
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan, index) => (
-              <div key={index} className={`relative rounded-2xl p-8 ${plan.highlighted ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-2xl scale-105' : 'bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700'}`}>
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="px-4 py-1 bg-yellow-400 text-yellow-900 rounded-full text-sm font-bold">
-                      MOST POPULAR
-                    </span>
-                  </div>
-                )}
-                
-                <div className="mb-6">
-                  <h3 className={`text-2xl font-bold mb-2 ${plan.highlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                    {plan.name}
-                  </h3>
-                  <div className="mb-2">
-                    <span className={`text-5xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                      {plan.price}
-                    </span>
-                    {plan.period !== 'contact us' && (
-                      <span className={`text-lg ml-2 ${plan.highlighted ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400'}`}>
-                        /{plan.period}
-                      </span>
-                    )}
-                  </div>
-                  <p className={plan.highlighted ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300'}>
-                    {plan.description}
-                  </p>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start space-x-3">
-                      <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.highlighted ? 'text-white' : 'text-green-500 dark:text-green-400'}`} />
-                      <span className={plan.highlighted ? 'text-white' : 'text-gray-700 dark:text-gray-300'}>
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                  plan.highlighted 
-                    ? 'bg-white text-blue-600 hover:bg-blue-50' 
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg'
-                }`}>
-                  {plan.price === 'Custom' ? 'Contact Sales' : 'Get Started'}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-gray-700 dark:text-gray-300 mt-12">
-            All plans include a 14-day free trial. No credit card required. Cancel anytime.
-          </p>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-center text-white shadow-2xl">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Ready to Transform Your Content Workflow?
-            </h2>
-            <p className="text-xl mb-8 opacity-90">
-              Join thousands of creators who are already saving hours every week
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="/dashboard" className="px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all shadow-lg">
-                Start Free Trial
-              </a>
-              <button className="px-8 py-4 bg-white/20 backdrop-blur text-white rounded-xl font-semibold text-lg hover:bg-white/30 transition-all border-2 border-white/50">
-                Schedule Demo
-              </button>
-            </div>
-            <p className="mt-6 text-sm opacity-80">
-              ✓ No credit card required  ✓ 14-day free trial  ✓ Cancel anytime
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-slate-950 text-white py-12 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-2xl font-bold">ChainPost</span>
-              </div>
-              <p className="text-gray-400 mb-4">
-                AI-powered content creation tools for modern creators.
+        {/* --- TESTIMONIALS SECTION (Replaced Bottom CTA) --- */}
+        <section id="testimonials" className="py-24 px-6 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                Loved by Modern Creators
+              </h2>
+              <p className="text-lg text-slate-600">
+                Join the community of 10,000+ creators shipping faster with NexusCreate.
               </p>
             </div>
 
-            {/* Product */}
-            <div>
-              <h4 className="font-bold mb-4 text-white">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Changelog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Roadmap</a></li>
-              </ul>
-            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {testimonials.map((t, i) => (
+                <div key={i} className="bg-slate-50 p-8 rounded-3xl border border-slate-100 relative">
+                  <Quote className="absolute top-8 right-8 w-8 h-8 text-slate-200 fill-slate-200" />
+                  
+                  <div className="flex items-center gap-1 mb-4">
+                    <StarRating rating={t.rating} />
+                  </div>
+                  
+                  <p className="text-slate-700 font-medium text-lg mb-6 leading-relaxed">
+                    "{t.quote}"
+                  </p>
 
-            {/* Company */}
-            <div>
-              <h4 className="font-bold mb-4 text-white">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h4 className="font-bold mb-4 text-white">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookies</a></li>
-              </ul>
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={t.image} 
+                      alt={t.name} 
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                    />
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">{t.name}</p>
+                      <p className="text-indigo-600 text-xs font-semibold uppercase tracking-wide">{t.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        </section>
 
-          <div className="border-t border-gray-800 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 mb-4 md:mb-0">
-              © {new Date().getFullYear()} ChainPost. All rights reserved.
-            </p>
-            <div className="flex space-x-6 text-gray-400">
-              <a href="#" className="hover:text-white transition-colors">Twitter</a>
-              <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
-              <a href="#" className="hover:text-white transition-colors">GitHub</a>
+        {/* --- FOOTER (Light Theme) --- */}
+        <footer className="bg-white border-t border-slate-200 pt-16 pb-12 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-12 mb-12">
+              
+              {/* Brand Column */}
+              <div className="col-span-1 md:col-span-1">
+                <div className="flex items-center space-x-2 mb-6">
+                  <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-lg font-bold text-slate-900">NexusCreate</span>
+                </div>
+                <p className="text-slate-500 text-sm leading-relaxed mb-6">
+                  The all-in-one toolkit helping creators automate the boring stuff and focus on storytelling.
+                </p>
+                <div className="flex gap-4">
+                  {/* Social Placeholders */}
+                  <div className="w-8 h-8 bg-slate-100 rounded-full hover:bg-indigo-100 transition-colors cursor-pointer flex items-center justify-center text-slate-600 hover:text-indigo-600">
+                    <span className="sr-only">Twitter</span>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                  </div>
+                  <div className="w-8 h-8 bg-slate-100 rounded-full hover:bg-indigo-100 transition-colors cursor-pointer flex items-center justify-center text-slate-600 hover:text-indigo-600">
+                    <span className="sr-only">Instagram</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Links Columns */}
+              <div>
+                <h4 className="font-bold text-slate-900 mb-4">Product</h4>
+                <ul className="space-y-3 text-sm text-slate-500">
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Video Compress</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Auto Captions</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Image Resize</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Pricing</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 mb-4">Company</h4>
+                <ul className="space-y-3 text-sm text-slate-500">
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">About Us</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Careers</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Blog</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Contact</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 mb-4">Legal</h4>
+                <ul className="space-y-3 text-sm text-slate-500">
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Privacy Policy</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Terms of Service</a></li>
+                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Cookie Policy</a></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-slate-400 text-sm">
+                © {new Date().getFullYear()} NexusCreate. All rights reserved.
+              </p>
+              <div className="flex gap-6">
+                 <span className="flex items-center gap-2 text-sm text-slate-500">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    All Systems Operational
+                 </span>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </>
   );
 }

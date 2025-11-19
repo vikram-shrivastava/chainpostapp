@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Upload,
   Video,
@@ -9,8 +9,10 @@ import {
   Check,
   Loader2,
   FileVideo,
-  Info,
   AlertCircle,
+  Sparkles,
+  ArrowRight,
+  Zap
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { CldUploadWidget } from "next-cloudinary";
@@ -49,7 +51,7 @@ export default function CompressVideoPage() {
       setProgress(0);
       setError(null);
 
-      toast.success("Video uploaded successfully! Now compress it.");
+      toast.success("Video uploaded successfully!");
     }
   };
 
@@ -68,15 +70,16 @@ export default function CompressVideoPage() {
     setProgress(0);
     setError(null);
 
+    // Mock progress simulation
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 90) {
           clearInterval(progressInterval);
           return 90;
         }
-        return prev + 10;
+        return prev + 5;
       });
-    }, 500);
+    }, 200);
 
     try {
       const response = await fetch("/api/compress-video", {
@@ -96,17 +99,20 @@ export default function CompressVideoPage() {
       }
 
       const data = await response.json();
+      
+      // Complete progress
+      clearInterval(progressInterval);
       setProgress(100);
 
       setCompressedVideoUrl(data.url);
       setCompressedSize(data.compressedSize);
       setIsComplete(true);
 
-      toast.success("Video compressed successfully!");
+      toast.success("Compression complete!");
     } catch (err) {
       console.error("Compression error:", err);
       setError(err.message);
-      toast.error(err.message);
+      toast.error("Compression failed. Please try again.");
       setProgress(0);
     } finally {
       setIsProcessing(false);
@@ -117,193 +123,222 @@ export default function CompressVideoPage() {
     setCloudinaryUrl(null);
     setPublicId(null);
     setCompressedVideoUrl(null);
-
     setOriginalSize(0);
     setCompressedSize(0);
-
     setIsProcessing(false);
     setIsComplete(false);
     setProgress(0);
     setError(null);
-
-    toast.success("Reset done!");
   };
 
   if (isPageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
-        <Loader2 className="w-12 h-12 text-orange-500 animate-spin" />
+      <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-orange-50 via-white to-amber-50 min-h-screen">
-      <Toaster />
-      <div className="max-w-5xl mx-auto px-6 py-12">
-
-        {/* HEADER */}
-        <div className="flex items-center mb-8">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4">
-            <Video className="w-6 h-6 text-white" />
-          </div>
+    <div className="min-h-full font-['Inter',_sans-serif]">
+      <Toaster position="top-right" />
+      
+      {/* --- PAGE HEADER --- */}
+      <div className="max-w-5xl mx-auto mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-gray-800">Compress Video</h1>
-            <p className="text-gray-600">Reduce video file size without losing quality</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Compress Video</h1>
+            <p className="text-slate-500 mt-1 text-sm">Reduce file size by up to 80% without sacrificing visual quality.</p>
+          </div>
+          
+          {/* Usage Pill */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600 shadow-sm">
+            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+            <span>2/10 Free Credits Used</span>
           </div>
         </div>
+      </div>
 
-        {/* UPLOAD AREA */}
+      <div className="max-w-5xl mx-auto">
+        
+        {/* --- UPLOAD STATE --- */}
         {!cloudinaryUrl && (
-          <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-orange-400 hover:bg-orange-50/50 transition-all cursor-pointer">
+          <div className="group relative bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 transition-all hover:border-indigo-400 hover:bg-indigo-50/10 cursor-pointer">
             <CldUploadWidget uploadPreset="Projects" onSuccess={handleUploadSuccess}>
               {({ open }) => (
-                <div onClick={() => open()}>
-                  <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Upload className="w-10 h-10 text-orange-500" />
+                <div onClick={() => open()} className="flex flex-col items-center justify-center text-center h-64">
+                  <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                    Click to upload video
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                    Upload your video
                   </h3>
-                  <p className="text-gray-600">MP4, MOV, AVI, WebM (Max 500MB)</p>
+                  <p className="text-slate-500 max-w-xs mx-auto mb-6">
+                    Drag and drop or click to browse. Supports MP4, MOV, AVI up to 500MB.
+                  </p>
+                  <button className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl shadow-sm hover:bg-slate-50 transition-colors">
+                    Select File
+                  </button>
                 </div>
               )}
             </CldUploadWidget>
           </div>
         )}
 
-        {/* MAIN CONTENT */}
+        {/* --- PROCESSING / RESULT STATE --- */}
         {cloudinaryUrl && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-
-            {/* HEADER */}
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <FileVideo className="w-6 h-6 text-orange-500" />
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-800">{publicId}</h3>
-                  <p className="text-sm text-gray-600">
-                    Original size: {formatFileSize(originalSize)}
-                  </p>
+          <div className="grid lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            {/* Left Column: Video Preview */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-black rounded-2xl overflow-hidden shadow-lg ring-1 ring-slate-900/5 aspect-video relative group">
+                <video
+                  src={isComplete ? compressedVideoUrl : cloudinaryUrl}
+                  controls
+                  className="w-full h-full object-contain"
+                />
+                
+                {/* Overlay Badge */}
+                <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md text-white text-xs font-medium rounded-full border border-white/10">
+                  {isComplete ? 'Optimized Preview' : 'Original Preview'}
                 </div>
               </div>
 
-              <button
-                onClick={handleReset}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-                disabled={isProcessing}
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
+              {/* File Info Strip */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    <FileVideo className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-medium text-slate-900 truncate max-w-[200px] md:max-w-xs">
+                      {publicId}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                       {formatFileSize(originalSize)} • Ready to process
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleReset}
+                  disabled={isProcessing}
+                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  title="Remove file"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Preview */}
-            {!isComplete && (
-              <video
-                src={cloudinaryUrl}
-                controls
-                className="w-full rounded-lg bg-black mb-6"
-                style={{ maxHeight: "400px" }}
-              />
-            )}
+            {/* Right Column: Controls & Stats */}
+            <div className="lg:col-span-1">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm h-full flex flex-col">
+                
+                <h3 className="font-semibold text-slate-900 mb-6 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-500" />
+                  Optimization Details
+                </h3>
 
-            {/* ERROR */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 p-4 rounded-lg mb-6 flex gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500" />
-                <p className="text-red-700">{error}</p>
+                {/* Progress Bar */}
+                {isProcessing && (
+                  <div className="mb-8">
+                    <div className="flex justify-between text-xs font-medium text-slate-600 mb-2">
+                      <span>Compressing...</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-600 transition-all duration-300 ease-out"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {error && (
+                  <div className="bg-red-50 border border-red-100 p-4 rounded-xl mb-6 flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
+                {/* Success Stats */}
+                {isComplete ? (
+                  <div className="space-y-6">
+                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex gap-3 items-start">
+                       <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                         <Check className="w-3 h-3 text-emerald-600" />
+                       </div>
+                       <div>
+                         <p className="text-sm font-medium text-emerald-900">Success!</p>
+                         <p className="text-xs text-emerald-700 mt-1">Video optimized perfectly.</p>
+                       </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                         <span className="text-xs text-slate-500">Original Size</span>
+                         <span className="text-sm font-medium text-slate-700">{formatFileSize(originalSize)}</span>
+                      </div>
+                      <div className="flex justify-center">
+                        <ArrowRight className="w-4 h-4 text-slate-300 rotate-90 md:rotate-0" />
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                         <span className="text-xs text-indigo-600 font-medium">Optimized Size</span>
+                         <span className="text-sm font-bold text-indigo-700">{formatFileSize(compressedSize)}</span>
+                      </div>
+                    </div>
+
+                     <div className="pt-4 border-t border-slate-100 mt-auto">
+                       <button
+                          onClick={async () => {
+                            const res = await fetch(compressedVideoUrl);
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `optimized-${publicId}.mp4`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-indigo-200"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download Video
+                        </button>
+                        <button 
+                          onClick={handleReset}
+                          className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-800 font-medium"
+                        >
+                          Compress another video
+                        </button>
+                     </div>
+                  </div>
+                ) : (
+                  /* Default State - Action Button */
+                  !isProcessing && (
+                    <div className="mt-auto">
+                       <div className="bg-slate-50 p-4 rounded-xl mb-6">
+                          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Settings</h4>
+                          <div className="flex items-center justify-between text-sm">
+                             <span className="text-slate-700">Compression Level</span>
+                             <span className="font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">High (Smart)</span>
+                          </div>
+                       </div>
+
+                       <button
+                        onClick={handleCompress}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all shadow-lg shadow-slate-200"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-300" />
+                        Start Compression
+                      </button>
+                    </div>
+                  )
+                )}
               </div>
-            )}
-
-            {/* PROCESSING */}
-            {isProcessing && (
-              <>
-                <div className="flex justify-center gap-3 py-6">
-                  <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-                  <span className="text-lg text-gray-700">Compressing...</span>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Progress</span>
-                    <span>{progress}%</span>
-                  </div>
-
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-orange-500 to-orange-600"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* COMPLETED */}
-            {isComplete && (
-              <>
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg mb-6 flex gap-3">
-                  <Check className="w-5 h-5 text-green-600" />
-                  <p className="text-green-700">Compression Complete!</p>
-                </div>
-
-                <h4 className="font-semibold text-gray-800 mb-2">Compressed Preview</h4>
-                <video
-                  src={compressedVideoUrl}
-                  controls
-                  className="w-full rounded-lg bg-black mb-6"
-                  style={{ maxHeight: "400px" }}
-                />
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Original Size</p>
-                    <p className="text-2xl font-semibold text-gray-800">
-                      {formatFileSize(originalSize)}
-                    </p>
-                  </div>
-
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Compressed Size</p>
-                    <p className="text-2xl font-semibold text-green-600">
-                      {formatFileSize(compressedSize)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* DOWNLOAD */}
-                <button
-                  onClick={async () => {
-                    const res = await fetch(compressedVideoUrl);
-                    const blob = await res.blob();
-                    const a = document.createElement("a");
-                    const url = URL.createObjectURL(blob);
-                    a.href = url;
-                    a.download = "compressed-video.mp4";
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg"
-                >
-                  <Download className="w-5 h-5" />
-                  Download Compressed Video
-                </button>
-              </>
-            )}
-
-            {/* Compress Button */}
-            {!isProcessing && !isComplete && (
-              <button
-                onClick={handleCompress}
-                className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg flex items-center justify-center gap-2"
-              >
-                <Video className="w-5 h-5" />
-                Compress Video
-              </button>
-            )}
+            </div>
           </div>
         )}
       </div>
