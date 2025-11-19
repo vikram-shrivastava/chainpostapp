@@ -126,7 +126,7 @@ export default function Homepage() {
                 
                 <div className="h-4 w-px bg-slate-200 mx-2"></div>
 
-                <a href="#" className="text-sm font-medium text-slate-900 hover:text-indigo-600 transition-colors">Log in</a>
+                <a href="/sign-in" className="text-sm font-medium text-slate-900 hover:text-indigo-600 transition-colors">Log in</a>
                 <a
                   href="/dashboard"
                   className="px-5 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 font-semibold text-sm"
@@ -350,10 +350,9 @@ export default function Homepage() {
               <div>
                 <h4 className="font-bold text-slate-900 mb-4">Product</h4>
                 <ul className="space-y-3 text-sm text-slate-500">
-                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Video Compress</a></li>
-                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Auto Captions</a></li>
-                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Image Resize</a></li>
-                  <li><a href="#" className="hover:text-indigo-600 transition-colors">Pricing</a></li>
+                  <li><a href="/dashboard/compress-video" className="hover:text-indigo-600 transition-colors">Video Compress</a></li>
+                  <li><a href="/dashboard/generate-captions" className="hover:text-indigo-600 transition-colors">Auto Captions</a></li>
+                  <li><a href="/dashboard/image-resize" className="hover:text-indigo-600 transition-colors">Image Resize</a></li>
                 </ul>
               </div>
 
