@@ -24,9 +24,8 @@ export async function POST(request) {
             return NextResponse.json({ message: "publicId and cloudinaryUrl are required" }, { status: 400 });
         }
 
-        // Use the **local subscription URL** for QStash dev server
         const result = await client.publishJSON({
-            url: "https://irremediable-sherice-abstrusely.ngrok-free.dev/api/handleGenerateCaptions", // <--- local ngrok endpoint
+            url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/handleGenerateCaptions`, 
             body: {
                 CloudinaryURL: cloudinaryUrl,
                 PublicId: publicId,
