@@ -3,27 +3,16 @@ import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
 import os from "os";
-
+import Project from "@/models/project.model";
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
 
-export async function handleGeneratePost(mediaUrl, platform = "all") {
+export async function handleGeneratePost({ captions, platform, userId, projectId }) {
     try {
-        const captionsRes = await fetch(process.env.CAPTION_GENERATION_API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: mediaUrl }),
-        });
-
-        if (!captionsRes.ok) {
-            throw new Error("Failed to get captions from transcription service");
+        // 1. Validate inputs
+        if (!captions || !userId || !projectId) {
+            throw new Error("Captions, userId, and projectId are required");
         }
-
-        const { captions } = await captionsRes.json();
-        if (!captions || captions.trim() === "") {
-            return { generatedPost: JSON.stringify({ error: "ERROR: captions missing" }) };
-        }
-
         // 2. Prompt construction
         const output_format = `{
   "twitter": { "post_text_twitter": "corresponding_post_text1" },
@@ -64,6 +53,15 @@ Follow these rules exactly and output JSON in this structure only: ${output_form
         // Return URL for frontend (in real production, upload to Cloudinary/S3 and return URL)
         const captionFileUrl = `file://${tempFilePath}`; // temporary local path
 
+
+        // 5. Update Project with generated post info
+        const updatedProject=await Project.findByIdAndUpdate(projectId, {
+            generatedPost: JSON.stringify(generatedJSON),
+            postFileUrl: captionFileUrl
+        });
+        if(!updatedProject){
+            throw new Error("Failed to update project with generated post");
+        }
         return {
             generatedPost: JSON.stringify(generatedJSON),
             message: `Post Generated for ${platform} successfully`,

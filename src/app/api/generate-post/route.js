@@ -15,52 +15,60 @@ export async function POST(request) {
 
     // Parse JSON from frontend
     const body = await request.json();
-    const { mediaUrl, fileName, fileType, platform } = body;
+    const {publicId, mediaUrl, fileName,originalSize, fileType, platform } = body;
 
-    if (!mediaUrl || !fileName) {
+    if (!mediaUrl || !fileName || !publicId) {
       return NextResponse.json({ message: "Media URL and file name are required" }, { status: 400 });
     }
 
-    // Generate AI post
-    const generatedPostRaw = await handleGeneratePost(mediaUrl, platform);
+    const newProject = new Project({
+      type:"generatePost",
+      ownerClerkUserId: userId,
+      projectTitle: fileName,
+      OriginalSize: parseFloat((originalSize / (1024 * 1024)).toFixed(2)) || 0,
+      fileName: fileName,
+      format: fileType || "unknown",
+      status: "queued",
+      publicId:publicId,
+      userIP: request.headers.get("x-forwarded-for") || "Unknown",
+      browser: request.headers.get("user-agent") || "Unknown"
+    })
+    const qstashUrl = process.env.QSTASH_QUEUE_URL; // e.g., https://qstash.upstash.io/v1/publish/<topic>
+    if (!qstashUrl) throw new Error("QSTASH_QUEUE_URL not set");
 
-    // Parse JSON safely
-    let generatedPostObj = {};
-    try {
-      generatedPostObj = typeof generatedPostRaw.generatedPost === "string"
-        ? JSON.parse(generatedPostRaw.generatedPost)
-        : generatedPostRaw.generatedPost;
-    } catch (err) {
-      console.error("Failed to parse AI output:", err);
-      generatedPostObj = { error: "Failed to parse AI output" };
+
+    const payload = {
+      CloudinaryURL: mediaUrl,
+      PublicId: publicId,
+      OriginalSize: parseFloat((originalSize / (1024 * 1024)).toFixed(2)) || 0,
+      userId,
+      platform:platform,
+      projectId:newProject._id
+    };
+
+
+    const res = await fetch(qstashUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.QSTASH_TOKEN}` // Upstash QStash auth token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to create QStash job: ${res.statusText}`);
     }
 
-    // Shorten file name and project title
-    const MAX_LENGTH = 20;
-    const baseName = fileName.split(".")[0];
-    const shortName = baseName.length > MAX_LENGTH ? baseName.slice(0, MAX_LENGTH) + "..." : baseName;
-    const projectTitle = `${shortName}_Posts`;
+    const jobResponse = await res.json();
+    console.log("✅ QStash job created:", jobResponse);
 
-    // Save project in DB
-    const currProject = new Project({
-      type: 'generatePost',
-      ownerClerkUserId: userId,
-      format: 'txt',
-      projectTitle,
-      fileName: shortName,
-      userIP: request.headers.get('x-forwarded-for') || 'Unknown',
-      browser: request.headers.get('user-agent') || 'Unknown',
-      generatedPostText: generatedPostObj // store JS object directly
-    });
-
-    await currProject.save();
-
-    // Respond with parsed object for frontend
-    return NextResponse.json({
-      message: 'Posts generated successfully',
-      generatedPost: generatedPostObj,
-      status: 200
-    });
+    // Return immediately, frontend can poll for final posts
+    return {
+      message: "Caption generation job queued successfully",
+      jobId: jobResponse?.id || null,
+      projectId: newProject._id
+    };
 
   } catch (error) {
     console.error("Error generating post:", error);

@@ -1,30 +1,38 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Added for navigation
 import {
-  Upload, 
-  FileText, 
-  Download, 
-  X, 
-  Check, 
-  Loader2, 
-  FileVideo, 
-  Image as ImageIcon, 
-  Copy, 
-  Sparkles, 
+  Upload,
+  FileText,
+  Download,
+  X,
+  Check,
+  Loader2,
+  FileVideo,
+  ImageIcon,
+  Copy,
+  Sparkles,
   MessageSquare,
   Zap,
-  ChevronRight
+  ArrowRight // Changed icon
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { CldUploadWidget } from "next-cloudinary";
 
 export default function GeneratePostPage() {
+  const router = useRouter();
+  
+  // --- State ---
   const [cloudinaryUrl, setCloudinaryUrl] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileType, setFileType] = useState(null);
+  
+  // Processing State
   const [isProcessing, setIsProcessing] = useState(false);
+  const [projectId, setProjectId] = useState(null); // Store Project ID for polling
+  
   const [isComplete, setIsComplete] = useState(false);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [selectedPlatform, setSelectedPlatform] = useState("linkedin");
@@ -32,6 +40,7 @@ export default function GeneratePostPage() {
   const [copiedPlatform, setCopiedPlatform] = useState(null);
   const fileInputRef = useRef(null);
 
+  // --- Platforms Config ---
   const platforms = [
     { 
       id: "linkedin", 
@@ -70,6 +79,51 @@ export default function GeneratePostPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // --- POLLING LOGIC ---
+  useEffect(() => {
+    let intervalId;
+
+    const checkStatus = async () => {
+      if (!projectId || !isProcessing) return;
+
+      try {
+        // Replace this URL with your actual endpoint to fetch a single Project by ID
+        const res = await fetch(`/api/projects/${projectId}`); 
+        
+        if (res.ok) {
+          const projectData = await res.json();
+          
+          // Check if the generatedPost field is populated in the DB
+          if (projectData && projectData.generatedPost) {
+             // If stored as string in DB, parse it. If object, use directly.
+             const parsedPosts = typeof projectData.generatedPost === 'string' 
+               ? JSON.parse(projectData.generatedPost) 
+               : projectData.generatedPost;
+
+             setGeneratedPosts(parsedPosts);
+             setIsProcessing(false);
+             setIsComplete(true);
+             toast.success("Post generation complete!");
+             clearInterval(intervalId);
+          }
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+        // We don't stop polling on error immediately in case it's a transient network issue
+      }
+    };
+
+    if (isProcessing && projectId) {
+      // Poll every 5 seconds
+      intervalId = setInterval(checkStatus, 5000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isProcessing, projectId]);
+
+
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -95,6 +149,7 @@ export default function GeneratePostPage() {
     setFileType(result.info.resource_type);
     setMediaPreview(url);
     setIsComplete(false);
+    setProjectId(null); // Reset project ID on new upload
 
     toast.success("Media uploaded successfully!");
   };
@@ -106,6 +161,7 @@ export default function GeneratePostPage() {
     }
 
     setIsProcessing(true);
+    setIsComplete(false);
 
     try {
       const response = await fetch('/api/generate-post', {
@@ -120,19 +176,23 @@ export default function GeneratePostPage() {
       });
 
       if (!response.ok) {
-        toast.error('Post generation failed. Please try again.');
-        setIsProcessing(false);
-        return;
+        throw new Error("Failed to initiate generation");
       }
 
       const data = await response.json();
-      setGeneratedPosts(data.generatedPost || {});
-      setIsComplete(true);
-      toast.success('Posts generated successfully!');
+      
+      // The API now returns a Project ID immediately saying "Queued"
+      if (data.projectId) {
+         setProjectId(data.projectId);
+         toast.info("Added to generation queue. Please wait...");
+         // The useEffect hook above will now take over and poll for results
+      } else {
+         throw new Error("No project ID returned");
+      }
+
     } catch (error) {
       console.error(error);
-      toast.error('An error occurred while generating posts.');
-    } finally {
+      toast.error('An error occurred while starting generation.');
       setIsProcessing(false);
     }
   };
@@ -173,7 +233,12 @@ export default function GeneratePostPage() {
     setGeneratedPosts({});
     setMediaPreview(null);
     setCloudinaryUrl(null);
+    setProjectId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleGoToDashboard = () => {
+    router.push('/dashboard'); 
   };
 
   if (isPageLoading) {
@@ -260,9 +325,11 @@ export default function GeneratePostPage() {
                     </p>
                   </div>
                 </div>
+                {/* Disable remove button while processing */}
                 <button
                   onClick={handleReset}
-                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  disabled={isProcessing}
+                  className={`p-2 rounded-lg transition-colors ${isProcessing ? 'text-slate-300 cursor-not-allowed' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'}`}
                   title="Remove file"
                 >
                   <X className="w-5 h-5" />
@@ -282,10 +349,18 @@ export default function GeneratePostPage() {
 
               {/* Processing State */}
               {isProcessing && (
-                  <div className="bg-white border border-indigo-100 rounded-xl p-6 text-center shadow-sm">
+                  <div className="bg-white border border-indigo-100 rounded-xl p-6 text-center shadow-sm animate-pulse">
                       <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-3" />
-                      <h3 className="font-medium text-slate-900">Analyzing Content...</h3>
-                      <p className="text-xs text-slate-500 mt-1">Our AI is watching your video to write the perfect captions.</p>
+                      <h3 className="font-medium text-slate-900">Generating Content...</h3>
+                      <p className="text-xs text-slate-500 mt-2 mb-4">This might take a moment. You can stay here or check your dashboard later.</p>
+                      
+                      <button 
+                        onClick={handleGoToDashboard}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
+                      >
+                        <span>Go to Dashboard</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
                   </div>
               )}
             </div>
@@ -302,6 +377,17 @@ export default function GeneratePostPage() {
                         <p className="text-sm text-slate-500 max-w-xs">Upload your media and click 'Generate' to see AI-written posts for LinkedIn, Instagram, and Twitter.</p>
                     </div>
                 )}
+                
+                {/* Processing Placeholder (Right Side) */}
+                 {isProcessing && (
+                    <div className="h-full min-h-[300px] bg-slate-50 border-2 border-dashed border-indigo-200 rounded-2xl flex flex-col items-center justify-center text-center p-8">
+                         <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center shadow-sm mb-4 animate-bounce">
+                            <Sparkles className="w-8 h-8 text-indigo-400" />
+                        </div>
+                        <h3 className="text-slate-900 font-medium mb-1">AI is Working Magic</h3>
+                        <p className="text-sm text-slate-500 max-w-xs">Analysing visuals, writing captions, and formatting for platforms...</p>
+                    </div>
+                 )}
 
                 {/* Results View */}
                 {isComplete && (
