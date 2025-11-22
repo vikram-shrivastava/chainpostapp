@@ -45,19 +45,11 @@ Follow these rules exactly and output JSON in this structure only: ${output_form
         const allPostsContent = Object.entries(generatedJSON)
             .map(([platformId, obj]) => `=== ${platformId.toUpperCase()} ===\n\n${obj[`post_text_${platformId}`]}\n\n`)
             .join("\n");
-        
-        // Save temporary file in OS temp dir
-        const tempFilePath = path.join(os.tmpdir(), `social_media_posts_${Date.now()}.txt`);
-        fs.writeFileSync(tempFilePath, allPostsContent, "utf-8");
-
-        // Return URL for frontend (in real production, upload to Cloudinary/S3 and return URL)
-        const captionFileUrl = `file://${tempFilePath}`; // temporary local path
 
 
         // 5. Update Project with generated post info
         const updatedProject=await Project.findByIdAndUpdate(projectId, {
-            generatedPost: JSON.stringify(generatedJSON),
-            postFileUrl: captionFileUrl
+            generatedPostText: generatedJSON,
         });
         if(!updatedProject){
             throw new Error("Failed to update project with generated post");
@@ -65,7 +57,6 @@ Follow these rules exactly and output JSON in this structure only: ${output_form
         return {
             generatedPost: JSON.stringify(generatedJSON),
             message: `Post Generated for ${platform} successfully`,
-            postFileUrl: captionFileUrl
         };
     } catch (error) {
         console.error("Error in handleGeneratePost:", error);

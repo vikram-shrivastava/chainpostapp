@@ -88,7 +88,7 @@ export default function GeneratePostPage() {
 
       try {
         // Replace this URL with your actual endpoint to fetch a single Project by ID
-        const res = await fetch(`/api/projects/${projectId}`); 
+        const res = await fetch(`/api/getProjectbyid/?id=${projectId}`); 
         
         if (res.ok) {
           const projectData = await res.json();
