@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import dbConnect from '@/db';
 import { Client } from "@upstash/qstash";
-
+import Project from "@/models/project.model.js";
 export async function POST(request) {
   await dbConnect();
 
