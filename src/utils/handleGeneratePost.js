@@ -49,7 +49,7 @@ Follow these rules exactly and output JSON in this structure only: ${output_form
 
         // 5. Update Project with generated post info
         const updatedProject=await Project.findByIdAndUpdate(projectId, {
-            generatedPostText: generatedJSON,
+            generatedPostText: JSON.stringify(generatedJSON),
         });
         if(!updatedProject){
             throw new Error("Failed to update project with generated post");
