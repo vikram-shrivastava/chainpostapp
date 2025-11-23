@@ -48,13 +48,13 @@ Follow these rules exactly and output JSON in this structure only: ${output_form
 
         // 5. Update Project with generated post info
         const updatedProject=await Project.findByIdAndUpdate(projectId, {
-            generatedPostText: JSON.stringify(generatedJSON),
+            generatedPostText: generatedJSON,
         });
         if(!updatedProject){
             throw new Error("Failed to update project with generated post");
         }
         return {
-            generatedPost: generatedJSON,
+            generatedPost: JSON.stringify(generatedJSON),
             message: `Post Generated for ${platform} successfully`,
         };
     } catch (error) {
