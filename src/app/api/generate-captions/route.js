@@ -21,7 +21,7 @@ export async function POST(request) {
           type:"videoCaption",
           ownerClerkUserId: userId,
           projectTitle: fileName,
-          fileName: fileName,
+          fileName: fileName.split('.').slice(0, -1).join('.') || fileName,
           format: fileType || "unknown",
           status: "queued",
           publicId:publicId,

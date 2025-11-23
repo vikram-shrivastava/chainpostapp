@@ -29,7 +29,7 @@ export async function POST(request) {
       ownerClerkUserId: userId,
       projectTitle: fileName,
       OriginalSize: parseFloat((originalSize / (1024 * 1024)).toFixed(2)) || 0,
-      fileName: fileName,
+      fileName: fileName.split('.').slice(0, -1).join('.') || fileName,
       format: fileType || "unknown",
       status: "queued",
       publicId: publicId,
