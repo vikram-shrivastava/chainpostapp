@@ -1,14 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
-import os from "os";
+import dbConnect from "@/db/index.js";
 import Project from "@/models/project.model";
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
 
 export async function handleGeneratePost({ captions, platform, userId, projectId }) {
     try {
+        await dbConnect();
         // 1. Validate inputs
         if (!captions || !userId || !projectId) {
             throw new Error("Captions, userId, and projectId are required");
