@@ -20,7 +20,13 @@ import {
   MoreVertical,
   CheckCircle2,
   ArrowRight,
-  Maximize2
+  Maximize2,
+  // New imports for the update
+  Copy,
+  Check,
+  Twitter,
+  Instagram,
+  Linkedin
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -80,6 +86,9 @@ export default function ProjectPage() {
   const [project, setProject] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // State to handle copy feedback (stores the key of the copied item)
+  const [copyStatus, setCopyStatus] = useState(null);
 
   useEffect(() => {
     if (!projectid) return;
@@ -101,6 +110,14 @@ export default function ProjectPage() {
 
     fetchProject();
   }, [projectid]);
+
+  // Helper function to handle copying text
+  const copyToClipboard = (text, key) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopyStatus(key);
+    setTimeout(() => setCopyStatus(null), 2000); // Reset after 2 seconds
+  };
 
   if (loading) {
     return (
@@ -218,15 +235,15 @@ export default function ProjectPage() {
               </div>
               <h1 className="text-3xl font-bold text-slate-900 mb-2">{projectTitle || fileName}</h1>
               <div className="flex items-center gap-4 text-sm text-slate-500">
-                 <span className="flex items-center gap-1.5">
-                   <Calendar className="w-4 h-4" />
-                   Created {new Date(createdAt).toLocaleDateString()}
-                 </span>
-                 <span className="hidden sm:inline text-slate-300">|</span>
-                 <span className="flex items-center gap-1.5">
-                   <Clock className="w-4 h-4" />
-                   Last updated {new Date(updatedAt).toLocaleDateString()}
-                 </span>
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    Created {new Date(createdAt).toLocaleDateString()}
+                  </span>
+                  <span className="hidden sm:inline text-slate-300">|</span>
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    Last updated {new Date(updatedAt).toLocaleDateString()}
+                  </span>
               </div>
             </div>
           </div>
@@ -325,7 +342,13 @@ export default function ProjectPage() {
             {type === 'videoCaption' && (
               <>
                 <SectionHeader icon={Captions} title="Transcript & Captions" action={
-                   <button className="text-sm text-indigo-600 font-medium hover:underline">Copy Text</button>
+                   <button 
+                    onClick={() => copyToClipboard(generatedCaptions, 'transcript')}
+                    className="flex items-center gap-1 text-sm text-indigo-600 font-medium hover:underline"
+                   >
+                      {copyStatus === 'transcript' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copyStatus === 'transcript' ? 'Copied!' : 'Copy Text'}
+                   </button>
                 } />
                 <div className="relative">
                    {generatedCaptions ? (
@@ -336,30 +359,91 @@ export default function ProjectPage() {
                      </div>
                    ) : (
                      <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        No captions generated for this project.
+                       No captions generated for this project.
                      </div>
                    )}
                 </div>
               </>
             )}
 
-            {/* Post Generator Layout */}
+            {/* Post Generator Layout - UPDATED SECTION */}
             {type === 'generatePost' && (
               <>
                 <SectionHeader icon={Sparkles} title="AI Generated Content" />
-                <div className="grid gap-6">
+                <div className="space-y-6">
                    {generatedPostText ? (
-                     <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Generated Output</h4>
-                        <div className="prose prose-sm max-w-none text-slate-700">
-                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText.twitter.post_text_twitter}</pre>
-                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText.instagram.post_text_instagram}</pre>
-                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText.linkedin.post_text_linkedin}</pre>
+                     <div className="grid gap-6">
+                        
+                        {/* Twitter / X Card */}
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                           <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                              <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                                 <Twitter className="w-4 h-4 text-sky-500" />
+                                 <span>Twitter / X</span>
+                              </div>
+                              <button 
+                                onClick={() => copyToClipboard(generatedPostText.twitter?.post_text_twitter, 'twitter')}
+                                className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-md transition-colors"
+                              >
+                                {copyStatus === 'twitter' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copyStatus === 'twitter' ? 'Copied!' : 'Copy'}
+                              </button>
+                           </div>
+                           <div className="p-5 bg-white">
+                              <p className="whitespace-pre-wrap text-slate-700 text-sm leading-relaxed">
+                                {generatedPostText.twitter?.post_text_twitter || "No text generated."}
+                              </p>
+                           </div>
                         </div>
+
+                        {/* Instagram Card */}
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                           <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                              <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                                 <Instagram className="w-4 h-4 text-pink-600" />
+                                 <span>Instagram</span>
+                              </div>
+                              <button 
+                                onClick={() => copyToClipboard(generatedPostText.instagram?.post_text_instagram, 'instagram')}
+                                className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-md transition-colors"
+                              >
+                                {copyStatus === 'instagram' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copyStatus === 'instagram' ? 'Copied!' : 'Copy'}
+                              </button>
+                           </div>
+                           <div className="p-5 bg-white">
+                              <p className="whitespace-pre-wrap text-slate-700 text-sm leading-relaxed">
+                                {generatedPostText.instagram?.post_text_instagram || "No text generated."}
+                              </p>
+                           </div>
+                        </div>
+
+                        {/* LinkedIn Card */}
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                           <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                              <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                                 <Linkedin className="w-4 h-4 text-blue-700" />
+                                 <span>LinkedIn</span>
+                              </div>
+                              <button 
+                                onClick={() => copyToClipboard(generatedPostText.linkedin?.post_text_linkedin, 'linkedin')}
+                                className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 px-2.5 py-1.5 rounded-md transition-colors"
+                              >
+                                {copyStatus === 'linkedin' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copyStatus === 'linkedin' ? 'Copied!' : 'Copy'}
+                              </button>
+                           </div>
+                           <div className="p-5 bg-white">
+                              <p className="whitespace-pre-wrap text-slate-700 text-sm leading-relaxed">
+                                {generatedPostText.linkedin?.post_text_linkedin || "No text generated."}
+                              </p>
+                           </div>
+                        </div>
+
                      </div>
                    ) : (
                      <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        Content generation pending or failed.
+                       Content generation pending or failed.
                      </div>
                    )}
                 </div>
@@ -375,13 +459,13 @@ export default function ProjectPage() {
                       <div className="space-y-6">
                          <img src={compressedUrl} alt="Resized" className="max-h-[300px] mx-auto rounded-lg shadow-sm border border-slate-200" />
                          <a 
-                            href={compressedUrl} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
-                          >
-                            <Download className="w-4 h-4" /> Download Image
-                          </a>
+                           href={compressedUrl} 
+                           target="_blank" 
+                           rel="noreferrer"
+                           className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+                         >
+                           <Download className="w-4 h-4" /> Download Image
+                         </a>
                       </div>
                    ) : (
                       <p className="text-slate-400">Image not available</p>
@@ -426,7 +510,7 @@ export default function ProjectPage() {
                  <h3 className="font-bold text-lg mb-2">Need changes?</h3>
                  <p className="text-slate-300 text-sm mb-6">Start a new project using this file as a base.</p>
                  <button className="w-full py-3 bg-white text-slate-900 rounded-xl font-semibold text-sm hover:bg-slate-100 transition-colors flex items-center justify-center gap-2">
-                    Start New Project <ArrowRight className="w-4 h-4" />
+                   Start New Project <ArrowRight className="w-4 h-4" />
                  </button>
               </div>
               {/* Decorative BG */}
