@@ -6,17 +6,17 @@ import {
   Type, 
   FileText, 
   Maximize2, 
-  Check, 
   ArrowRight, 
   Menu, 
   X, 
-  Zap, 
   Star, 
   StarHalf, 
   Play, 
   Layers, 
   Quote 
 } from 'lucide-react';
+// 1. Import UserButton along with useUser
+import { useUser, UserButton } from '@clerk/nextjs';
 
 // --- Reusable Star Rating Component ---
 const StarRating = ({ rating = 5 }) => {
@@ -24,7 +24,9 @@ const StarRating = ({ rating = 5 }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
   const emptyStars = 5 - Math.ceil(rating);
-
+  
+  // Removed unused user hook here for performance
+  
   for (let i = 0; i < fullStars; i++) {
     stars.push(<Star key={`full-${i}`} className="w-4 h-4 fill-amber-400 text-amber-400" />);
   }
@@ -40,6 +42,9 @@ const StarRating = ({ rating = 5 }) => {
 
 export default function Homepage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // 2. Get user status
+  const { isSignedIn, isLoaded } = useUser();
 
   // ---- DATA ----
   const features = [
@@ -95,12 +100,6 @@ export default function Homepage() {
 
   return (
     <>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-      </head>
-
       <div className="min-h-screen bg-white font-['Inter',_sans-serif] text-slate-900 selection:bg-indigo-100">
 
         {/* --- NAVBAR --- */}
@@ -126,13 +125,25 @@ export default function Homepage() {
                 
                 <div className="h-4 w-px bg-slate-200 mx-2"></div>
 
-                <a href="/sign-in" className="text-sm font-medium text-slate-900 hover:text-indigo-600 transition-colors">Log in</a>
-                <a
-                  href="/dashboard"
-                  className="px-5 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 font-semibold text-sm"
-                >
-                  Get Started
-                </a>
+                {/* 3. Conditional Desktop Auth Logic */}
+                {!isLoaded ? (
+                  <div className="w-24 h-10 bg-slate-100 animate-pulse rounded-lg"></div>
+                ) : isSignedIn ? (
+                  <div className="flex items-center gap-6">
+                     <a href="/dashboard" className="text-sm font-medium text-slate-900 hover:text-indigo-600 transition-colors">Dashboard</a>
+                     <UserButton afterSignOutUrl="/" />
+                  </div>
+                ) : (
+                  <>
+                    <a href="/sign-in" className="text-sm font-medium text-slate-900 hover:text-indigo-600 transition-colors">Log in</a>
+                    <a
+                      href="/dashboard"
+                      className="px-5 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 font-semibold text-sm"
+                    >
+                      Get Started
+                    </a>
+                  </>
+                )}
               </div>
 
               {/* Mobile Menu Toggle */}
@@ -150,10 +161,28 @@ export default function Homepage() {
             <div className="md:hidden border-t border-slate-100 bg-white px-6 py-4 space-y-4 shadow-xl">
               <a href="#features" className="block text-base font-medium text-slate-600">Features</a>
               <a href="#testimonials" className="block text-base font-medium text-slate-600">Stories</a>
-              <a href="#" className="block text-base font-medium text-slate-600">Log in</a>
-              <a href="/dashboard" className="block w-full py-3 bg-slate-900 text-white text-center rounded-lg font-semibold">
-                Get Started
-              </a>
+              
+              {/* 4. Conditional Mobile Auth Logic */}
+              {!isLoaded ? (
+                 <div className="w-full h-12 bg-slate-100 animate-pulse rounded-lg"></div>
+              ) : isSignedIn ? (
+                <>
+                  <div className="flex items-center justify-between py-2 border-t border-slate-50 mt-2 pt-4">
+                    <span className="text-slate-500 font-medium">Account</span>
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                  <a href="/dashboard" className="block w-full py-3 bg-slate-900 text-white text-center rounded-lg font-semibold">
+                    Go to Dashboard
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a href="/sign-in" className="block text-base font-medium text-slate-600">Log in</a>
+                  <a href="/dashboard" className="block w-full py-3 bg-slate-900 text-white text-center rounded-lg font-semibold">
+                    Get Started
+                  </a>
+                </>
+              )}
             </div>
           )}
         </nav>
@@ -185,7 +214,7 @@ export default function Homepage() {
                   href="/dashboard"
                   className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-lg shadow-xl shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
                 >
-                  Start Creating Free
+                  {isSignedIn ? "Go to Dashboard" : "Start Creating Free"}
                   <ArrowRight className="w-5 h-5" />
                 </a>
                 <button className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2">
@@ -197,13 +226,10 @@ export default function Homepage() {
 
             {/* --- AUTOPLAY VIDEO MOCKUP --- */}
             <div className="relative max-w-5xl mx-auto">
-              {/* Decorative blurs */}
               <div className="absolute -top-10 -left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
               <div className="absolute -top-10 -right-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
               
-              {/* Browser Window Container */}
               <div className="relative bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-800/50 ring-1 ring-slate-900/10">
-                {/* Browser Controls */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
                   <div className="flex gap-1.5">
                     <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
@@ -215,9 +241,7 @@ export default function Homepage() {
                   </div>
                 </div>
 
-                {/* Video Element */}
                 <div className="relative aspect-video bg-slate-900">
-                  {/* Sample video source (Big Buck Bunny is standard for demos) */}
                   <video 
                     className="w-full h-full object-cover opacity-90"
                     autoPlay 
@@ -230,10 +254,8 @@ export default function Homepage() {
                     Your browser does not support the video tag.
                   </video>
                   
-                  {/* Overlay gradient for depth */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none"></div>
                   
-                  {/* Floating UI element mockup */}
                   <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
                     <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -275,7 +297,7 @@ export default function Homepage() {
           </div>
         </section>
 
-        {/* --- TESTIMONIALS SECTION (Replaced Bottom CTA) --- */}
+        {/* --- TESTIMONIALS SECTION --- */}
         <section id="testimonials" className="py-24 px-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
@@ -322,7 +344,6 @@ export default function Homepage() {
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-4 gap-12 mb-12">
               
-              {/* Brand Column */}
               <div className="col-span-1 md:col-span-1">
                 <div className="flex items-center space-x-2 mb-6">
                   <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
@@ -334,7 +355,6 @@ export default function Homepage() {
                   The all-in-one toolkit helping creators automate the boring stuff and focus on storytelling.
                 </p>
                 <div className="flex gap-4">
-                  {/* Social Placeholders */}
                   <div className="w-8 h-8 bg-slate-100 rounded-full hover:bg-indigo-100 transition-colors cursor-pointer flex items-center justify-center text-slate-600 hover:text-indigo-600">
                     <span className="sr-only">Twitter</span>
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
@@ -346,7 +366,6 @@ export default function Homepage() {
                 </div>
               </div>
 
-              {/* Links Columns */}
               <div>
                 <h4 className="font-bold text-slate-900 mb-4">Product</h4>
                 <ul className="space-y-3 text-sm text-slate-500">
