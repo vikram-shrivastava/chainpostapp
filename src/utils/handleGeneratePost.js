@@ -55,7 +55,7 @@ Follow these rules exactly and output JSON in this structure only: ${output_form
             throw new Error("Failed to update project with generated post");
         }
         return {
-            generatedPost: JSON.stringify(generatedJSON),
+            generatedPost: generatedJSON,
             message: `Post Generated for ${platform} successfully`,
         };
     } catch (error) {
