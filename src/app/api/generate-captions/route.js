@@ -28,7 +28,7 @@ export async function POST(request) {
           userIP: request.headers.get("x-forwarded-for") || "Unknown",
           browser: request.headers.get("user-agent") || "Unknown"
         })
-
+    await newProject.save();
     // Queue job to QStash
     const result = await client.publishJSON({
       topic: "transcribe-videos",   // QStash topic name
