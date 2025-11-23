@@ -34,6 +34,7 @@ export default function GeneratePostPage() {
   const [projectId, setProjectId] = useState(null); // Store Project ID for polling
   
   const [isComplete, setIsComplete] = useState(false);
+  const [PublicId,setPublicId]=useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [selectedPlatform, setSelectedPlatform] = useState("linkedin");
   const [generatedPosts, setGeneratedPosts] = useState({});
@@ -144,6 +145,7 @@ export default function GeneratePostPage() {
       name: result.info.original_filename + "." + result.info.format,
       size: result.info.bytes,
       type: result.info.resource_type === "video" ? "video" : "image",
+      PublicId:result.info.public_id
     });
 
     setFileType(result.info.resource_type);
@@ -171,7 +173,9 @@ export default function GeneratePostPage() {
           mediaUrl: cloudinaryUrl,
           fileName: selectedFile.name,
           fileType: fileType,
-          platform: "all"
+          platform: "all",
+          publicId:selectedFile.PublicId,
+          originalSize: selectedFile.size
         })
       });
 
