@@ -352,7 +352,9 @@ export default function ProjectPage() {
                      <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Generated Output</h4>
                         <div className="prose prose-sm max-w-none text-slate-700">
-                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText}</pre>
+                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText.twitter.post_text_twitter}</pre>
+                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText.instagram.post_text_instagram}</pre>
+                           <pre className="whitespace-pre-wrap font-sans">{generatedPostText.linkedin.post_text_linkedin}</pre>
                         </div>
                      </div>
                    ) : (
