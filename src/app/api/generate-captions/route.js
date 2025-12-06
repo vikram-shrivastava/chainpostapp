@@ -29,7 +29,7 @@ export async function POST(request) {
           browser: request.headers.get("user-agent") || "Unknown"
         })
     await newProject.save();
-    // Queue job to QStash
+    // Queue job to QStash for background processing
     const result = await client.publishJSON({
       topic: "transcribe-videos",   // QStash topic name
       body: {
